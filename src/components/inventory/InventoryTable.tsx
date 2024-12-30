@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { AddItemDialog } from "./AddItemDialog";
 
 interface InventoryItem {
   id: string;
@@ -69,7 +70,11 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   };
 
   return (
-    <>
+    <div className="space-y-4">
+      <div className="w-full max-w-sm">
+        <AddItemDialog roomNumber={roomNumber} onItemAdded={refetch} />
+      </div>
+
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -125,6 +130,6 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </div>
   );
 };
