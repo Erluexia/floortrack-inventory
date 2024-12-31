@@ -4,6 +4,11 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+interface RoomCount {
+  room_number: string;
+  count: string;
+}
+
 export const RoomGrid = () => {
   const navigate = useNavigate();
   const floors = [1, 2, 3, 4, 5, 6];
@@ -11,7 +16,6 @@ export const RoomGrid = () => {
   const { data: itemCounts } = useQuery({
     queryKey: ['itemCountsByRoom'],
     queryFn: async () => {
-      // Using a raw SQL query to get the counts
       const { data, error } = await supabase
         .rpc('count_items_by_room');
 
@@ -20,8 +24,8 @@ export const RoomGrid = () => {
         return {};
       }
 
-      // Ensure data is not null and properly type the accumulator
-      return (data || []).reduce((acc: Record<string, number>, item: { room_number: string, count: string }) => {
+      // Properly type the data and handle the string to number conversion
+      return (data || []).reduce((acc: Record<string, number>, item: RoomCount) => {
         acc[item.room_number] = parseInt(item.count);
         return acc;
       }, {});
