@@ -26,7 +26,7 @@ export const RoomGrid = () => {
 
       // Convert array of room counts to a record object
       const counts: Record<string, number> = {};
-      (data as RoomCount[] || []).forEach((item) => {
+      (data as unknown as RoomCount[]).forEach((item) => {
         counts[item.room_number] = parseInt(item.count);
       });
       
