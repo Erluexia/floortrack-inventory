@@ -3,9 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface AddItemDialogProps {
   roomNumber: string;
@@ -17,6 +18,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [maintenanceCount, setMaintenanceCount] = useState("");
+  const [status, setStatus] = useState<"good" | "maintenance" | "low">("good");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,9 +35,6 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       });
       return;
     }
-
-    const status = maintenanceQuantity > 0 ? "maintenance" : 
-                  totalQuantity < 5 ? "low" : "good";
 
     const { error } = await supabase
       .from("items")
@@ -61,6 +60,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       setName("");
       setQuantity("");
       setMaintenanceCount("");
+      setStatus("good");
       onItemAdded();
     }
   };
@@ -68,8 +68,11 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full">
-          <Plus className="h-4 w-4 mr-2" />
+        <Button 
+          className="ml-auto bg-primary hover:bg-primary/90 text-white" 
+          size="sm"
+        >
+          <PlusCircle className="h-4 w-4 mr-2" />
           Add Item
         </Button>
       </DialogTrigger>
@@ -108,6 +111,27 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
               onChange={(e) => setMaintenanceCount(e.target.value)}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <RadioGroup 
+              value={status} 
+              onValueChange={(value) => setStatus(value as "good" | "maintenance" | "low")}
+              className="flex gap-4"
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="good" id="good" />
+                <Label htmlFor="good">Good</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="maintenance" id="maintenance" />
+                <Label htmlFor="maintenance">Maintenance</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="low" id="low" />
+                <Label htmlFor="low">Low Stock</Label>
+              </div>
+            </RadioGroup>
           </div>
           <Button type="submit" className="w-full">Add Item</Button>
         </form>

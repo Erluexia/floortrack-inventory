@@ -71,7 +71,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
   return (
     <div className="space-y-4">
-      <div className="w-full max-w-sm">
+      <div className="flex justify-end">
         <AddItemDialog roomNumber={roomNumber} onItemAdded={refetch} />
       </div>
 
