@@ -24,11 +24,13 @@ export const RoomGrid = () => {
         return {};
       }
 
-      // Properly type the data and handle the string to number conversion
-      return (data || []).reduce((acc: Record<string, number>, item: RoomCount) => {
-        acc[item.room_number] = parseInt(item.count);
-        return acc;
-      }, {});
+      // Convert array of room counts to a record object
+      const counts: Record<string, number> = {};
+      (data || []).forEach((item: RoomCount) => {
+        counts[item.room_number] = parseInt(item.count);
+      });
+      
+      return counts;
     }
   });
 
