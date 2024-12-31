@@ -18,7 +18,7 @@ export const DashboardStats = () => {
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Needs Maintenance</p>
+            <p className="text-sm font-medium text-gray-600">Need Maintenance</p>
             <p className="text-2xl font-semibold mt-1">45</p>
           </div>
           <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -30,7 +30,7 @@ export const DashboardStats = () => {
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600">Low Stock Alerts</p>
+            <p className="text-sm font-medium text-gray-600">Need Replacement</p>
             <p className="text-2xl font-semibold mt-1">12</p>
           </div>
           <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
