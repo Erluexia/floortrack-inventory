@@ -44,7 +44,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      count_items_by_room: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          room_number: string
+          count: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

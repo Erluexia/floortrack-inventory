@@ -20,7 +20,8 @@ export const RoomGrid = () => {
         return {};
       }
 
-      return data.reduce((acc: Record<string, number>, item: any) => {
+      // Ensure data is not null and properly type the accumulator
+      return (data || []).reduce((acc: Record<string, number>, item: { room_number: string, count: string }) => {
         acc[item.room_number] = parseInt(item.count);
         return acc;
       }, {});
