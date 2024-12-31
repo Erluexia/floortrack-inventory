@@ -11,18 +11,17 @@ export const RoomGrid = () => {
   const { data: itemCounts } = useQuery({
     queryKey: ['itemCountsByRoom'],
     queryFn: async () => {
+      // Using a raw SQL query to get the counts
       const { data, error } = await supabase
-        .from('items')
-        .select('room_number, count(*)')
-        .groupBy('room_number');
+        .rpc('count_items_by_room');
 
       if (error) {
         console.error('Error fetching item counts:', error);
         return {};
       }
 
-      return data.reduce((acc, item) => {
-        acc[item.room_number] = item.count;
+      return data.reduce((acc: Record<string, number>, item: any) => {
+        acc[item.room_number] = parseInt(item.count);
         return acc;
       }, {});
     }
