@@ -1,6 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,7 +22,6 @@ export const RoomGrid = () => {
         return {};
       }
 
-      // Convert array of room counts to a record object
       const counts: Record<string, number> = {};
       (data as unknown as RoomCount[]).forEach((item) => {
         counts[item.room_number] = parseInt(item.count);

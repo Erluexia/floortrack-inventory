@@ -1,13 +1,32 @@
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const DashboardStats = () => {
+  const { data: stats } = useQuery({
+    queryKey: ['itemStats'],
+    queryFn: async () => {
+      const { data: items, error } = await supabase
+        .from('items')
+        .select('status');
+
+      if (error) throw error;
+
+      const total = items.length;
+      const maintenance = items.filter(item => item.status === 'maintenance').length;
+      const replacement = items.filter(item => item.status === 'low').length;
+
+      return { total, maintenance, replacement };
+    }
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Total Items</p>
-            <p className="text-2xl font-semibold mt-1">1,234</p>
+            <p className="text-2xl font-semibold mt-1">{stats?.total || 0}</p>
           </div>
           <div className="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
             <CheckCircle className="h-6 w-6 text-primary" />
@@ -19,7 +38,7 @@ export const DashboardStats = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Need Maintenance</p>
-            <p className="text-2xl font-semibold mt-1">45</p>
+            <p className="text-2xl font-semibold mt-1">{stats?.maintenance || 0}</p>
           </div>
           <div className="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
             <Clock className="h-6 w-6 text-yellow-600" />
@@ -31,7 +50,7 @@ export const DashboardStats = () => {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-600">Need Replacement</p>
-            <p className="text-2xl font-semibold mt-1">12</p>
+            <p className="text-2xl font-semibold mt-1">{stats?.replacement || 0}</p>
           </div>
           <div className="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
             <AlertTriangle className="h-6 w-6 text-red-600" />
