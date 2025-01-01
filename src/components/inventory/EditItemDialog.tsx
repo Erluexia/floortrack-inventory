@@ -20,10 +20,11 @@ interface EditItemDialogProps {
     quantity: number;
     status: "good" | "maintenance" | "low";
   };
+  roomNumber: string;
   onItemUpdated: () => void;
 }
 
-export const EditItemDialog = ({ item, onItemUpdated }: EditItemDialogProps) => {
+export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(item.quantity.toString());
@@ -51,29 +52,44 @@ export const EditItemDialog = ({ item, onItemUpdated }: EditItemDialogProps) => 
     if (maintenanceQuantity > 0) status = 'maintenance';
     if (replacementQuantity > 0) status = 'low';
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from("items")
       .update({
         name,
-        quantity: parseInt(quantity),
+        quantity: totalQuantity,
         status,
       })
       .eq("id", item.id);
 
-    if (error) {
+    if (updateError) {
       toast({
         title: "Error",
         description: "Failed to update item",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Item updated successfully",
-      });
-      onItemUpdated();
-      setOpen(false);
+      return;
     }
+
+    // Log the edit activity
+    const { error: logError } = await supabase
+      .from("activity_logs")
+      .insert({
+        room_number: roomNumber,
+        item_name: name,
+        action_type: "edit",
+        details: `Updated quantity: ${totalQuantity}, Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity}`,
+      });
+
+    if (logError) {
+      console.error("Failed to log activity:", logError);
+    }
+
+    toast({
+      title: "Success",
+      description: "Item updated successfully",
+    });
+    onItemUpdated();
+    setOpen(false);
   };
 
   return (

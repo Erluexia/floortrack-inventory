@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Edit } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AddItemDialog } from "./AddItemDialog";
 import { EditItemDialog } from "./EditItemDialog";
+import { ActivityLog } from "./ActivityLog";
 
 interface InventoryItem {
   id: string;
@@ -48,24 +49,39 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
-    const { error } = await supabase
+    const { error: deleteError } = await supabase
       .from("items")
       .delete()
       .eq("id", itemToDelete.id);
 
-    if (error) {
+    if (deleteError) {
       toast({
         title: "Error",
         description: "Failed to delete item",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Item deleted successfully",
-      });
-      refetch();
+      return;
     }
+
+    // Log the delete activity
+    const { error: logError } = await supabase
+      .from("activity_logs")
+      .insert({
+        room_number: roomNumber,
+        item_name: itemToDelete.name,
+        action_type: "delete",
+        details: `Deleted item with quantity: ${itemToDelete.quantity}`,
+      });
+
+    if (logError) {
+      console.error("Failed to log activity:", logError);
+    }
+
+    toast({
+      title: "Success",
+      description: "Item deleted successfully",
+    });
+    refetch();
     setItemToDelete(null);
   };
 
@@ -101,7 +117,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
-                    <EditItemDialog item={item} onItemUpdated={refetch} />
+                    <EditItemDialog item={item} roomNumber={roomNumber} onItemUpdated={refetch} />
                     <Button
                       variant="ghost"
                       size="icon"
@@ -116,6 +132,8 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
           </TableBody>
         </Table>
       </div>
+
+      <ActivityLog roomNumber={roomNumber} />
 
       <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
         <AlertDialogContent>
