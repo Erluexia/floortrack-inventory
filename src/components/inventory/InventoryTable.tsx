@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,9 +103,6 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                       <div className="text-sm text-red-600">
                         Need Replacement: {item.quantity}
                       </div>
-                    )}
-                    {item.status === "good" && (
-                      <StatusBadge status="good" />
                     )}
                   </div>
                 </TableCell>

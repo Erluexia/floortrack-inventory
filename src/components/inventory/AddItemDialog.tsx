@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface AddItemDialogProps {
   roomNumber: string;
@@ -18,7 +17,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [maintenanceCount, setMaintenanceCount] = useState("");
-  const [status, setStatus] = useState<"good" | "maintenance" | "low">("good");
+  const [replacementCount, setReplacementCount] = useState("");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,15 +25,20 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
 
     const totalQuantity = parseInt(quantity);
     const maintenanceQuantity = parseInt(maintenanceCount);
+    const replacementQuantity = parseInt(replacementCount);
 
-    if (maintenanceQuantity > totalQuantity) {
+    if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
       toast({
         title: "Error",
-        description: "Maintenance count cannot be greater than total quantity",
+        description: "Maintenance or replacement count cannot be greater than total quantity",
         variant: "destructive",
       });
       return;
     }
+
+    let status = 'good';
+    if (maintenanceQuantity > 0) status = 'maintenance';
+    if (replacementQuantity > 0) status = 'low';
 
     const { error } = await supabase
       .from("items")
@@ -60,7 +64,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       setName("");
       setQuantity("");
       setMaintenanceCount("");
-      setStatus("good");
+      setReplacementCount("");
       onItemAdded();
     }
   };
@@ -113,25 +117,15 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
-            <RadioGroup 
-              value={status} 
-              onValueChange={(value) => setStatus(value as "good" | "maintenance" | "low")}
-              className="flex gap-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="good" id="good" />
-                <Label htmlFor="good">Good</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="maintenance" id="maintenance" />
-                <Label htmlFor="maintenance">Maintenance</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="low" id="low" />
-                <Label htmlFor="low">Low Stock</Label>
-              </div>
-            </RadioGroup>
+            <Label htmlFor="replacement">Items Needing Replacement</Label>
+            <Input
+              id="replacement"
+              type="number"
+              min="0"
+              value={replacementCount}
+              onChange={(e) => setReplacementCount(e.target.value)}
+              required
+            />
           </div>
           <Button type="submit" className="w-full">Add Item</Button>
         </form>
