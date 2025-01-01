@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Edit2 } from "lucide-react";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface EditItemDialogProps {
   item: {
@@ -28,11 +27,29 @@ export const EditItemDialog = ({ item, onItemUpdated }: EditItemDialogProps) => 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(item.quantity.toString());
-  const [status, setStatus] = useState(item.status);
+  const [maintenanceCount, setMaintenanceCount] = useState(item.status === "maintenance" ? item.quantity.toString() : "0");
+  const [replacementCount, setReplacementCount] = useState(item.status === "low" ? item.quantity.toString() : "0");
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const totalQuantity = parseInt(quantity);
+    const maintenanceQuantity = parseInt(maintenanceCount);
+    const replacementQuantity = parseInt(replacementCount);
+
+    if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
+      toast({
+        title: "Error",
+        description: "Maintenance or replacement count cannot be greater than total quantity",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let status = 'good';
+    if (maintenanceQuantity > 0) status = 'maintenance';
+    if (replacementQuantity > 0) status = 'low';
 
     const { error } = await supabase
       .from("items")
@@ -81,7 +98,7 @@ export const EditItemDialog = ({ item, onItemUpdated }: EditItemDialogProps) => 
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="quantity">Total Quantity</Label>
             <Input
               id="quantity"
               type="number"
@@ -92,21 +109,26 @@ export const EditItemDialog = ({ item, onItemUpdated }: EditItemDialogProps) => 
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
-            <RadioGroup value={status} onValueChange={(value: "good" | "maintenance" | "low") => setStatus(value)}>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="good" id="good" />
-                <Label htmlFor="good">Good</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="maintenance" id="maintenance" />
-                <Label htmlFor="maintenance">Needs Maintenance</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="low" id="low" />
-                <Label htmlFor="low">Needs Replacement</Label>
-              </div>
-            </RadioGroup>
+            <Label htmlFor="maintenance">Items Needing Maintenance</Label>
+            <Input
+              id="maintenance"
+              type="number"
+              min="0"
+              value={maintenanceCount}
+              onChange={(e) => setMaintenanceCount(e.target.value)}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="replacement">Items Needing Replacement</Label>
+            <Input
+              id="replacement"
+              type="number"
+              min="0"
+              value={replacementCount}
+              onChange={(e) => setReplacementCount(e.target.value)}
+              required
+            />
           </div>
           <div className="flex justify-end">
             <Button type="submit">Save Changes</Button>

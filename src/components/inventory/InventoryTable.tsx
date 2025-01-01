@@ -79,9 +79,10 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Item Details</TableHead>
-              <TableHead>Status Counts</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Item Name</TableHead>
+              <TableHead>Need Maintenance</TableHead>
+              <TableHead>Need Replacement</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -93,20 +94,12 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="space-y-1">
-                    {item.status === "maintenance" && (
-                      <div className="text-sm text-yellow-600">
-                        Need Maintenance: {item.quantity}
-                      </div>
-                    )}
-                    {item.status === "low" && (
-                      <div className="text-sm text-red-600">
-                        Need Replacement: {item.quantity}
-                      </div>
-                    )}
-                  </div>
+                  {item.status === "maintenance" ? item.quantity : 0}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell>
+                  {item.status === "low" ? item.quantity : 0}
+                </TableCell>
+                <TableCell>
                   <div className="flex justify-end gap-2">
                     <EditItemDialog item={item} onItemUpdated={refetch} />
                     <Button
