@@ -28,8 +28,12 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(item.quantity.toString());
-  const [maintenanceCount, setMaintenanceCount] = useState(item.status === "maintenance" ? item.quantity.toString() : "0");
-  const [replacementCount, setReplacementCount] = useState(item.status === "low" ? item.quantity.toString() : "0");
+  const [maintenanceCount, setMaintenanceCount] = useState(
+    item.status === "maintenance" ? item.quantity.toString() : "0"
+  );
+  const [replacementCount, setReplacementCount] = useState(
+    item.status === "low" ? item.quantity.toString() : "0"
+  );
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,9 +52,11 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       return;
     }
 
-    let status = 'good';
-    if (maintenanceQuantity > 0) status = 'maintenance';
-    if (replacementQuantity > 0) status = 'low';
+    let status = "good";
+    if (maintenanceQuantity > 0) status = "maintenance";
+    if (replacementQuantity > 0) status = "low";
+
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { error: updateError } = await supabase
       .from("items")
@@ -70,7 +76,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       return;
     }
 
-    // Log the edit activity
+    // Log the edit activity with user information
     const { error: logError } = await supabase
       .from("activity_logs")
       .insert({
@@ -78,6 +84,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
         item_name: name,
         action_type: "edit",
         details: `Updated quantity: ${totalQuantity}, Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity}`,
+        user_id: user?.id,
       });
 
     if (logError) {

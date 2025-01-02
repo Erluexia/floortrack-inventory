@@ -17,6 +17,7 @@ export type Database = {
           id: string
           item_name: string
           room_number: string
+          user_id: string | null
         }
         Insert: {
           action_type: string
@@ -25,6 +26,7 @@ export type Database = {
           id?: string
           item_name: string
           room_number: string
+          user_id?: string | null
         }
         Update: {
           action_type?: string
@@ -33,6 +35,7 @@ export type Database = {
           id?: string
           item_name?: string
           room_number?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -63,6 +66,65 @@ export type Database = {
           room_number?: string
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      items_history: {
+        Row: {
+          changed_at: string | null
+          id: string
+          item_id: string | null
+          name: string
+          quantity: number
+          room_number: string
+          status: string
+        }
+        Insert: {
+          changed_at?: string | null
+          id?: string
+          item_id?: string | null
+          name: string
+          quantity: number
+          room_number: string
+          status: string
+        }
+        Update: {
+          changed_at?: string | null
+          id?: string
+          item_id?: string | null
+          name?: string
+          quantity?: number
+          room_number?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_history_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
         }
         Relationships: []
       }

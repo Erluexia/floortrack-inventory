@@ -12,7 +12,13 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activity_logs")
-        .select("*")
+        .select(`
+          *,
+          profiles:user_id (
+            username,
+            avatar_url
+          )
+        `)
         .eq("room_number", roomNumber)
         .order("created_at", { ascending: false });
 
@@ -33,7 +39,10 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
             >
               <p className="text-sm">
                 <span className="font-medium">{log.item_name}</span>{" "}
-                was {log.action_type}ed
+                was {log.action_type}ed by{" "}
+                <span className="font-medium">
+                  {log.profiles?.username || "Unknown User"}
+                </span>
               </p>
               <p className="text-xs text-gray-500">{log.details}</p>
               <p className="text-xs text-gray-400 mt-1">

@@ -11,10 +11,10 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
     queryKey: ["previous-items", roomNumber],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("items")
+        .from("items_history")
         .select("*")
         .eq("room_number", roomNumber)
-        .order("updated_at", { ascending: false });
+        .order("changed_at", { ascending: false });
 
       if (error) throw error;
       return data;
@@ -27,30 +27,31 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Item Name</TableHead>
-            <TableHead>Need Maintenance</TableHead>
-            <TableHead>Need Replacement</TableHead>
-            <TableHead>Last Updated</TableHead>
+            <TableHead>Previous Quantity</TableHead>
+            <TableHead>Previous Status</TableHead>
+            <TableHead>Changed At</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {items?.map((item) => (
             <TableRow key={item.id}>
               <TableCell>
-                <div className="font-medium">
-                  {item.name}: {item.quantity}
-                </div>
+                <div className="font-medium">{item.name}</div>
               </TableCell>
+              <TableCell>{item.quantity}</TableCell>
+              <TableCell>{item.status}</TableCell>
               <TableCell>
-                {item.status === "maintenance" ? item.quantity : 0}
-              </TableCell>
-              <TableCell>
-                {item.status === "low" ? item.quantity : 0}
-              </TableCell>
-              <TableCell>
-                {new Date(item.updated_at).toLocaleString()}
+                {new Date(item.changed_at).toLocaleString()}
               </TableCell>
             </TableRow>
           ))}
+          {(!items || items.length === 0) && (
+            <TableRow>
+              <TableCell colSpan={4} className="text-center py-4">
+                No previous changes recorded
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

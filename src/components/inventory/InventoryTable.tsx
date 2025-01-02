@@ -48,6 +48,8 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { error: deleteError } = await supabase
       .from("items")
       .delete()
@@ -62,7 +64,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
       return;
     }
 
-    // Log the delete activity
+    // Log the delete activity with user information
     const { error: logError } = await supabase
       .from("activity_logs")
       .insert({
@@ -70,6 +72,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         item_name: itemToDelete.name,
         action_type: "delete",
         details: `Deleted item with quantity: ${itemToDelete.quantity}`,
+        user_id: user?.id,
       });
 
     if (logError) {
