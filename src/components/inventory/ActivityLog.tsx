@@ -26,7 +26,12 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
       const { data, error } = await supabase
         .from("activity_logs")
         .select(`
-          *,
+          id,
+          item_name,
+          action_type,
+          details,
+          created_at,
+          user_id,
           profiles:user_id (
             username,
             avatar_url
@@ -39,7 +44,8 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         console.error("Error fetching activity logs:", error);
         throw error;
       }
-      return data;
+      
+      return data as ActivityLog[];
     },
   });
 
