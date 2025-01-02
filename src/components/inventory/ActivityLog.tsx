@@ -6,15 +6,28 @@ interface ActivityLogProps {
   roomNumber: string;
 }
 
+type ActivityLog = {
+  id: string;
+  item_name: string;
+  action_type: string;
+  details: string;
+  created_at: string;
+  user_id: string;
+  profiles: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+}
+
 export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
-  const { data: logs } = useQuery({
+  const { data: logs } = useQuery<ActivityLog[]>({
     queryKey: ["activity_logs", roomNumber],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("activity_logs")
         .select(`
           *,
-          profiles (
+          profiles:user_id (
             username,
             avatar_url
           )
