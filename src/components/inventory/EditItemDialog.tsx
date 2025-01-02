@@ -68,6 +68,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       .eq("id", item.id);
 
     if (updateError) {
+      console.error("Update error:", updateError);
       toast({
         title: "Error",
         description: "Failed to update item",
@@ -83,7 +84,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
         room_number: roomNumber,
         item_name: name,
         action_type: "edit",
-        details: `Updated quantity: ${totalQuantity}, Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity}`,
+        details: `Updated quantity to ${totalQuantity} (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
         user_id: user?.id,
       });
 

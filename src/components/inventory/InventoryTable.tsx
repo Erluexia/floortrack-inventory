@@ -101,6 +101,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
           <TableHeader>
             <TableRow>
               <TableHead>Item Name</TableHead>
+              <TableHead>Total Quantity</TableHead>
               <TableHead>Need Maintenance</TableHead>
               <TableHead>Need Replacement</TableHead>
               <TableHead className="w-[100px]"></TableHead>
@@ -110,10 +111,9 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
             {items?.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <div className="font-medium">
-                    {item.name}: {item.quantity}
-                  </div>
+                  <div className="font-medium">{item.name}</div>
                 </TableCell>
+                <TableCell>{item.quantity}</TableCell>
                 <TableCell>
                   {item.status === "maintenance" ? item.quantity : 0}
                 </TableCell>
