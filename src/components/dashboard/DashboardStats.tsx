@@ -8,13 +8,17 @@ export const DashboardStats = () => {
     queryFn: async () => {
       const { data: items, error } = await supabase
         .from('items')
-        .select('status');
+        .select('status, quantity');
 
       if (error) throw error;
 
-      const total = items.length;
-      const maintenance = items.filter(item => item.status === 'maintenance').length;
-      const replacement = items.filter(item => item.status === 'low').length;
+      const total = items.reduce((sum, item) => sum + item.quantity, 0);
+      const maintenance = items
+        .filter(item => item.status === 'maintenance')
+        .reduce((sum, item) => sum + item.quantity, 0);
+      const replacement = items
+        .filter(item => item.status === 'low')
+        .reduce((sum, item) => sum + item.quantity, 0);
 
       return { total, maintenance, replacement };
     }

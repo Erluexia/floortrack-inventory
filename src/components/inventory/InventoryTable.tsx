@@ -67,7 +67,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
       return;
     }
 
-    // Log the delete activity with user information
+    // Log the delete activity
     const { error: logError } = await supabase
       .from("activity_logs")
       .insert({

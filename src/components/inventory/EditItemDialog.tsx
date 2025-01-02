@@ -40,8 +40,8 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
     e.preventDefault();
 
     const totalQuantity = parseInt(quantity);
-    const maintenanceQuantity = parseInt(maintenanceCount);
-    const replacementQuantity = parseInt(replacementCount);
+    const maintenanceQuantity = parseInt(maintenanceCount) || 0;
+    const replacementQuantity = parseInt(replacementCount) || 0;
 
     if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
       toast({
@@ -76,7 +76,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       return;
     }
 
-    // Log the edit activity with user information
+    // Log the edit activity
     const { error: logError } = await supabase
       .from("activity_logs")
       .insert({
@@ -139,7 +139,6 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
               min="0"
               value={maintenanceCount}
               onChange={(e) => setMaintenanceCount(e.target.value)}
-              required
             />
           </div>
           <div className="space-y-2">
@@ -150,7 +149,6 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
               min="0"
               value={replacementCount}
               onChange={(e) => setReplacementCount(e.target.value)}
-              required
             />
           </div>
           <div className="flex justify-end">

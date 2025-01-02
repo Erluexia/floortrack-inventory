@@ -24,8 +24,8 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
     e.preventDefault();
 
     const totalQuantity = parseInt(quantity);
-    const maintenanceQuantity = parseInt(maintenanceCount);
-    const replacementQuantity = parseInt(replacementCount);
+    const maintenanceQuantity = parseInt(maintenanceCount) || 0;
+    const replacementQuantity = parseInt(replacementCount) || 0;
 
     if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
       toast({
@@ -39,6 +39,8 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
     let status = 'good';
     if (maintenanceQuantity > 0) status = 'maintenance';
     if (replacementQuantity > 0) status = 'low';
+
+    const { data: { user } } = await supabase.auth.getUser();
 
     const { error } = await supabase
       .from("items")
@@ -55,18 +57,34 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
         description: "Failed to add item",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Item added successfully",
-      });
-      setIsOpen(false);
-      setName("");
-      setQuantity("");
-      setMaintenanceCount("");
-      setReplacementCount("");
-      onItemAdded();
+      return;
     }
+
+    // Log the activity
+    const { error: logError } = await supabase
+      .from("activity_logs")
+      .insert({
+        room_number: roomNumber,
+        item_name: name,
+        action_type: "add",
+        details: `Added ${totalQuantity} items (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
+        user_id: user?.id,
+      });
+
+    if (logError) {
+      console.error("Failed to log activity:", logError);
+    }
+
+    toast({
+      title: "Success",
+      description: "Item added successfully",
+    });
+    setIsOpen(false);
+    setName("");
+    setQuantity("");
+    setMaintenanceCount("");
+    setReplacementCount("");
+    onItemAdded();
   };
 
   return (
@@ -113,7 +131,6 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
               min="0"
               value={maintenanceCount}
               onChange={(e) => setMaintenanceCount(e.target.value)}
-              required
             />
           </div>
           <div className="space-y-2">
@@ -124,7 +141,6 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
               min="0"
               value={replacementCount}
               onChange={(e) => setReplacementCount(e.target.value)}
-              required
             />
           </div>
           <Button type="submit" className="w-full">Add Item</Button>
