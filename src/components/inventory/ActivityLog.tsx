@@ -32,7 +32,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
           details,
           created_at,
           user_id,
-          profiles (
+          profiles!activity_logs_user_id_fkey (
             username,
             avatar_url
           )
@@ -45,7 +45,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
-      return data || [];
+      return (data as ActivityLog[]) || [];
     },
   });
 
