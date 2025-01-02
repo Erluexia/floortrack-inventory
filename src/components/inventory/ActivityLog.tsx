@@ -12,7 +12,7 @@ type ActivityLog = {
   action_type: string;
   details: string;
   created_at: string;
-  user_id: string;
+  user_id: string | null;
   profiles: {
     username: string | null;
     avatar_url: string | null;
@@ -32,7 +32,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
           details,
           created_at,
           user_id,
-          profiles:user_id (
+          profiles (
             username,
             avatar_url
           )
@@ -45,7 +45,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
-      return data as ActivityLog[];
+      return data || [];
     },
   });
 
