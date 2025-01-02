@@ -17,7 +17,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AddItemDialog } from "./AddItemDialog";
 import { EditItemDialog } from "./EditItemDialog";
-import { ActivityLog } from "./ActivityLog";
 
 interface InventoryItem {
   id: string;
@@ -132,8 +131,6 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
           </TableBody>
         </Table>
       </div>
-
-      <ActivityLog roomNumber={roomNumber} />
 
       <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
         <AlertDialogContent>
