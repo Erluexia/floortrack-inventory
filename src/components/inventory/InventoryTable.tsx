@@ -40,7 +40,10 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         .eq("room_number", roomNumber)
         .order("name");
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching items:", error);
+        throw error;
+      }
       return data as InventoryItem[];
     },
   });

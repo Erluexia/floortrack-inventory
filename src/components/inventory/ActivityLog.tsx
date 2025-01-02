@@ -14,7 +14,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         .from("activity_logs")
         .select(`
           *,
-          profiles:user_id (
+          profiles (
             username,
             avatar_url
           )
@@ -22,7 +22,10 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         .eq("room_number", roomNumber)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching activity logs:", error);
+        throw error;
+      }
       return data;
     },
   });
