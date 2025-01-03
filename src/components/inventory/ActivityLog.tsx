@@ -14,17 +14,19 @@ interface ActivityLogProps {
   roomNumber: string;
 }
 
-type ActivityLog = {
+interface Profile {
+  username: string | null;
+  avatar_url: string | null;
+}
+
+interface ActivityLog {
   id: string;
   item_name: string;
   action_type: string;
   details: string;
   created_at: string;
   user_id: string | null;
-  profiles: {
-    username: string | null;
-    avatar_url: string | null;
-  } | null;
+  profiles: Profile | null;
 }
 
 export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
@@ -53,7 +55,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
-      return data || [];
+      return data as ActivityLog[];
     },
   });
 
