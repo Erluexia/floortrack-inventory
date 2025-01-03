@@ -26,7 +26,7 @@ interface ActivityLog {
   details: string;
   created_at: string;
   user_id: string | null;
-  profiles: Profile | null;
+  user: Profile | null;
 }
 
 export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
@@ -42,7 +42,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
           details,
           created_at,
           user_id,
-          profiles:user_id (
+          user:user_id (
             username,
             avatar_url
           )
@@ -55,7 +55,10 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
-      return data as ActivityLog[];
+      return (data as any[]).map(log => ({
+        ...log,
+        profiles: log.user // Map the 'user' field to 'profiles' to maintain compatibility
+      }));
     },
   });
 
@@ -78,7 +81,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
               <TableRow key={log.id}>
                 <TableCell className="font-medium">{log.item_name}</TableCell>
                 <TableCell>{log.action_type}</TableCell>
-                <TableCell>{log.profiles?.username || "Unknown User"}</TableCell>
+                <TableCell>{log.user?.username || "Unknown User"}</TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {log.details}
                 </TableCell>
