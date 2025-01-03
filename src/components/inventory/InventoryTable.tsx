@@ -90,6 +90,14 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
     setItemToDelete(null);
   };
 
+  const getMaintenanceCount = (item: InventoryItem) => {
+    return item.status === "maintenance" ? item.quantity : 0;
+  };
+
+  const getReplacementCount = (item: InventoryItem) => {
+    return item.status === "low" ? item.quantity : 0;
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -114,12 +122,8 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                   <div className="font-medium">{item.name}</div>
                 </TableCell>
                 <TableCell>{item.quantity}</TableCell>
-                <TableCell>
-                  {item.status === "maintenance" ? item.quantity : 0}
-                </TableCell>
-                <TableCell>
-                  {item.status === "low" ? item.quantity : 0}
-                </TableCell>
+                <TableCell>{getMaintenanceCount(item)}</TableCell>
+                <TableCell>{getReplacementCount(item)}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <EditItemDialog item={item} roomNumber={roomNumber} onItemUpdated={refetch} />

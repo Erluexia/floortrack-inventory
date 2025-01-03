@@ -40,7 +40,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
           details,
           created_at,
           user_id,
-          profiles!activity_logs_user_id_fkey (
+          profiles:user_id (
             username,
             avatar_url
           )
@@ -53,7 +53,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
-      return (data as unknown as ActivityLog[]) || [];
+      return data || [];
     },
   });
 
@@ -75,7 +75,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
             {logs?.map((log) => (
               <TableRow key={log.id}>
                 <TableCell className="font-medium">{log.item_name}</TableCell>
-                <TableCell>{log.action_type}ed</TableCell>
+                <TableCell>{log.action_type}</TableCell>
                 <TableCell>{log.profiles?.username || "Unknown User"}</TableCell>
                 <TableCell className="max-w-[200px] truncate">
                   {log.details}
