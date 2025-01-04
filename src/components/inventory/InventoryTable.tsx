@@ -51,19 +51,17 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
       // Group items by name and combine quantities
       const groupedItems = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
-        const status = item.status as "good" | "maintenance" | "low";
         if (!acc[item.name]) {
           acc[item.name] = {
             ...item,
-            status,
-            maintenanceCount: status === 'maintenance' ? item.quantity : 0,
-            replacementCount: status === 'low' ? item.quantity : 0,
-            goodCount: status === 'good' ? item.quantity : 0,
+            maintenanceCount: item.status === 'maintenance' ? item.quantity : 0,
+            replacementCount: item.status === 'low' ? item.quantity : 0,
+            goodCount: item.status === 'good' ? item.quantity : 0,
           };
         } else {
-          if (status === 'maintenance') {
+          if (item.status === 'maintenance') {
             acc[item.name].maintenanceCount = (acc[item.name].maintenanceCount || 0) + item.quantity;
-          } else if (status === 'low') {
+          } else if (item.status === 'low') {
             acc[item.name].replacementCount = (acc[item.name].replacementCount || 0) + item.quantity;
           } else {
             acc[item.name].goodCount = (acc[item.name].goodCount || 0) + item.quantity;
@@ -91,16 +89,12 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         return;
       }
 
-      // Get user information
-      const { data: userData, error: userError } = await supabase
+      // Get user information only if we have a valid user ID
+      const { data: userData } = user.id ? await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
-        .maybeSingle();
-
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-      }
+        .maybeSingle() : { data: null };
 
       const { error: deleteError } = await supabase
         .from("items")
@@ -118,17 +112,19 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
       }
 
       // Log the delete activity
-      await supabase
-        .from("activity_logs")
-        .insert({
-          room_number: roomNumber,
-          item_name: itemToDelete.name,
-          action_type: "delete",
-          details: `Deleted item with quantity: ${itemToDelete.quantity}`,
-          user_id: user.id,
-          email: user.email,
-          username: userData?.username,
-        });
+      if (user) {
+        await supabase
+          .from("activity_logs")
+          .insert({
+            room_number: roomNumber,
+            item_name: itemToDelete.name,
+            action_type: "delete",
+            details: `Deleted item with quantity: ${itemToDelete.quantity}`,
+            user_id: user.id,
+            email: user.email,
+            username: userData?.username,
+          });
+      }
 
       toast({
         title: "Success",
