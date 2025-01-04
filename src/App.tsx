@@ -2,21 +2,45 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Room from "./pages/Room";
-import { useState } from "react";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 const App = () => {
-  // Move queryClient inside component to ensure proper React context
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
+        staleTime: 5 * 60 * 1000,
         retry: 1,
       },
     },
   }));
+
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -25,8 +49,22 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/room/:id" element={<Room />} />
+            <Route
+              path="/"
+              element={session ? <Index /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/room/:id"
+              element={session ? <Room /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/login"
+              element={!session ? <Login /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/signup"
+              element={!session ? <Signup /> : <Navigate to="/" />}
+            />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
