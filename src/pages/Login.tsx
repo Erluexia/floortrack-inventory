@@ -16,6 +16,16 @@ const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email.trim() || !password) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter both email and password.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -25,7 +35,16 @@ const Login = () => {
       });
 
       if (error) {
-        if (error.message.includes("Email not confirmed")) {
+        console.error("Login error details:", error);
+        
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Invalid Credentials",
+            description: "The email or password you entered is incorrect.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes("Email not confirmed")) {
           toast({
             title: "Email Not Verified",
             description: "Please check your email and verify your account before logging in.",
@@ -34,28 +53,27 @@ const Login = () => {
         } else {
           toast({
             title: "Login Failed",
-            description: "Please check your email and password and try again.",
+            description: error.message,
             variant: "destructive",
           });
         }
-        console.error("Login error:", error);
         return;
       }
 
       if (data.user) {
-        navigate("/");
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
+        navigate("/");
       }
     } catch (error: any) {
+      console.error("Unexpected login error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
