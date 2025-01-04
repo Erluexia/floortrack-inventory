@@ -25,6 +25,9 @@ interface InventoryItem {
   status: "good" | "maintenance" | "low";
   room_number: string;
   updated_at: string;
+  maintenanceCount?: number;
+  replacementCount?: number;
+  goodCount?: number;
 }
 
 export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
