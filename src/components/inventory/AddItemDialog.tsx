@@ -14,6 +14,7 @@ interface AddItemDialogProps {
 
 export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [maintenanceCount, setMaintenanceCount] = useState("");
@@ -22,124 +23,147 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    const totalQuantity = parseInt(quantity);
-    const maintenanceQuantity = parseInt(maintenanceCount) || 0;
-    const replacementQuantity = parseInt(replacementCount) || 0;
+    setIsSubmitting(true);
 
-    if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
+    try {
+      const totalQuantity = parseInt(quantity);
+      const maintenanceQuantity = parseInt(maintenanceCount) || 0;
+      const replacementQuantity = parseInt(replacementCount) || 0;
+
+      if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
+        toast({
+          title: "Error",
+          description: "Maintenance or replacement count cannot be greater than total quantity",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Create separate items for different statuses
+      if (maintenanceQuantity > 0) {
+        const { error: maintenanceError } = await supabase
+          .from("items")
+          .insert({
+            name,
+            quantity: maintenanceQuantity,
+            status: 'maintenance',
+            room_number: roomNumber,
+          });
+
+        if (maintenanceError) {
+          toast({
+            title: "Error",
+            description: "Failed to add maintenance items",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      if (replacementQuantity > 0) {
+        const { error: replacementError } = await supabase
+          .from("items")
+          .insert({
+            name,
+            quantity: replacementQuantity,
+            status: 'low',
+            room_number: roomNumber,
+          });
+
+        if (replacementError) {
+          toast({
+            title: "Error",
+            description: "Failed to add replacement items",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Add remaining items as 'good' status
+      const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
+      if (goodQuantity > 0) {
+        const { error: goodError } = await supabase
+          .from("items")
+          .insert({
+            name,
+            quantity: goodQuantity,
+            status: 'good',
+            room_number: roomNumber,
+          });
+
+        if (goodError) {
+          toast({
+            title: "Error",
+            description: "Failed to add good items",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Get user information for activity log
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user?.id)
+        .single();
+
+      // Log the activity
+      const { error: logError } = await supabase
+        .from("activity_logs")
+        .insert({
+          room_number: roomNumber,
+          item_name: name,
+          action_type: "add",
+          details: `Added ${totalQuantity} items (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
+          user_id: user?.id,
+          email: user?.email,
+          username: userData?.username,
+        });
+
+      if (logError) {
+        console.error("Failed to log activity:", logError);
+      }
+
+      toast({
+        title: "Success",
+        description: "Items added successfully",
+      });
+      setIsOpen(false);
+      setName("");
+      setQuantity("");
+      setMaintenanceCount("");
+      setReplacementCount("");
+      onItemAdded();
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Maintenance or replacement count cannot be greater than total quantity",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Create separate items for different statuses
-    if (maintenanceQuantity > 0) {
-      const { error: maintenanceError } = await supabase
-        .from("items")
-        .insert({
-          name,
-          quantity: maintenanceQuantity,
-          status: 'maintenance',
-          room_number: roomNumber,
-        });
-
-      if (maintenanceError) {
-        toast({
-          title: "Error",
-          description: "Failed to add maintenance items",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    if (replacementQuantity > 0) {
-      const { error: replacementError } = await supabase
-        .from("items")
-        .insert({
-          name,
-          quantity: replacementQuantity,
-          status: 'low',
-          room_number: roomNumber,
-        });
-
-      if (replacementError) {
-        toast({
-          title: "Error",
-          description: "Failed to add replacement items",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // Add remaining items as 'good' status
-    const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
-    if (goodQuantity > 0) {
-      const { error: goodError } = await supabase
-        .from("items")
-        .insert({
-          name,
-          quantity: goodQuantity,
-          status: 'good',
-          room_number: roomNumber,
-        });
-
-      if (goodError) {
-        toast({
-          title: "Error",
-          description: "Failed to add good items",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // Log the activity
-    const { error: logError } = await supabase
-      .from("activity_logs")
-      .insert({
-        room_number: roomNumber,
-        item_name: name,
-        action_type: "add",
-        details: `Added ${totalQuantity} items (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
-        user_id: user?.id,
-      });
-
-    if (logError) {
-      console.error("Failed to log activity:", logError);
-    }
-
-    toast({
-      title: "Success",
-      description: "Items added successfully",
-    });
-    setIsOpen(false);
-    setName("");
-    setQuantity("");
-    setMaintenanceCount("");
-    setReplacementCount("");
-    onItemAdded();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          className="ml-auto bg-primary hover:bg-primary/90 text-white" 
+          className="ml-auto bg-primary hover:bg-primary/90 text-white font-arial" 
           size="sm"
+          disabled={isSubmitting}
         >
           <PlusCircle className="h-4 w-4 mr-2" />
           Add Item
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] font-arial">
         <DialogHeader>
           <DialogTitle>Add New Item</DialogTitle>
         </DialogHeader>
@@ -184,7 +208,13 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
               onChange={(e) => setReplacementCount(e.target.value)}
             />
           </div>
-          <Button type="submit" className="w-full">Add Item</Button>
+          <Button 
+            type="submit" 
+            className="w-full" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Adding..." : "Add Item"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

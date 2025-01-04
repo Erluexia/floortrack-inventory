@@ -14,28 +14,34 @@ export type Database = {
           action_type: string
           created_at: string
           details: string
+          email: string | null
           id: string
           item_name: string
           room_number: string
           user_id: string | null
+          username: string | null
         }
         Insert: {
           action_type: string
           created_at?: string
           details: string
+          email?: string | null
           id?: string
           item_name: string
           room_number: string
           user_id?: string | null
+          username?: string | null
         }
         Update: {
           action_type?: string
           created_at?: string
           details?: string
+          email?: string | null
           id?: string
           item_name?: string
           room_number?: string
           user_id?: string | null
+          username?: string | null
         }
         Relationships: [
           {

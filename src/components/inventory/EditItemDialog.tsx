@@ -26,6 +26,7 @@ interface EditItemDialogProps {
 
 export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(item.quantity.toString());
   const [maintenanceCount, setMaintenanceCount] = useState(
@@ -38,76 +39,119 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    const totalQuantity = parseInt(quantity);
-    const maintenanceQuantity = parseInt(maintenanceCount) || 0;
-    const replacementQuantity = parseInt(replacementCount) || 0;
+    setIsSubmitting(true);
 
-    if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
+    try {
+      const totalQuantity = parseInt(quantity);
+      const maintenanceQuantity = parseInt(maintenanceCount) || 0;
+      const replacementQuantity = parseInt(replacementCount) || 0;
+
+      if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
+        toast({
+          title: "Error",
+          description: "Maintenance or replacement count cannot be greater than total quantity",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Get user information
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user?.id)
+        .single();
+
+      // Delete existing item
+      const { error: deleteError } = await supabase
+        .from("items")
+        .delete()
+        .eq("name", item.name)
+        .eq("room_number", roomNumber);
+
+      if (deleteError) {
+        throw new Error("Failed to update item");
+      }
+
+      // Create new items with updated quantities
+      if (maintenanceQuantity > 0) {
+        await supabase
+          .from("items")
+          .insert({
+            name,
+            quantity: maintenanceQuantity,
+            status: 'maintenance',
+            room_number: roomNumber,
+          });
+      }
+
+      if (replacementQuantity > 0) {
+        await supabase
+          .from("items")
+          .insert({
+            name,
+            quantity: replacementQuantity,
+            status: 'low',
+            room_number: roomNumber,
+          });
+      }
+
+      const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
+      if (goodQuantity > 0) {
+        await supabase
+          .from("items")
+          .insert({
+            name,
+            quantity: goodQuantity,
+            status: 'good',
+            room_number: roomNumber,
+          });
+      }
+
+      // Log the edit activity
+      await supabase
+        .from("activity_logs")
+        .insert({
+          room_number: roomNumber,
+          item_name: name,
+          action_type: "edit",
+          details: `Updated quantity to ${totalQuantity} (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
+          user_id: user?.id,
+          email: user?.email,
+          username: userData?.username,
+        });
+
       toast({
-        title: "Error",
-        description: "Maintenance or replacement count cannot be greater than total quantity",
-        variant: "destructive",
+        title: "Success",
+        description: "Item updated successfully",
       });
-      return;
-    }
-
-    let status = "good";
-    if (maintenanceQuantity > 0) status = "maintenance";
-    if (replacementQuantity > 0) status = "low";
-
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { error: updateError } = await supabase
-      .from("items")
-      .update({
-        name,
-        quantity: totalQuantity,
-        status,
-      })
-      .eq("id", item.id);
-
-    if (updateError) {
-      console.error("Update error:", updateError);
+      onItemUpdated();
+      setOpen(false);
+    } catch (error) {
+      console.error("Update error:", error);
       toast({
         title: "Error",
         description: "Failed to update item",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Log the edit activity
-    const { error: logError } = await supabase
-      .from("activity_logs")
-      .insert({
-        room_number: roomNumber,
-        item_name: name,
-        action_type: "edit",
-        details: `Updated quantity to ${totalQuantity} (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
-        user_id: user?.id,
-      });
-
-    if (logError) {
-      console.error("Failed to log activity:", logError);
-    }
-
-    toast({
-      title: "Success",
-      description: "Item updated successfully",
-    });
-    onItemUpdated();
-    setOpen(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" disabled={isSubmitting}>
           <Edit2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="font-arial">
         <DialogHeader>
           <DialogTitle>Edit Item</DialogTitle>
         </DialogHeader>
@@ -153,7 +197,9 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
             />
           </div>
           <div className="flex justify-end">
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
         </form>
       </DialogContent>
