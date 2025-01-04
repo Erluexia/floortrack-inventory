@@ -39,16 +39,28 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // Log the attempt (without password)
+      console.log("Attempting login with email:", email.trim());
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
+        console.error("Login error details:", error);
+        
+        // Handle specific error cases
+        if (error.message.includes("Email not confirmed")) {
           toast({
-            title: "Login Failed",
-            description: "Invalid email or password. Please check your credentials and try again.",
+            title: "Email Not Verified",
+            description: "Please check your email and verify your account before logging in.",
+            variant: "destructive",
+          });
+        } else if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Invalid Credentials",
+            description: "The email or password you entered is incorrect. Please try again.",
             variant: "destructive",
           });
         } else {
@@ -58,9 +70,11 @@ const Login = () => {
             variant: "destructive",
           });
         }
-        console.error("Login error:", error);
         return;
       }
+
+      // Log successful login (without sensitive data)
+      console.log("Login successful for email:", email.trim());
 
       if (data?.user) {
         toast({
@@ -68,6 +82,14 @@ const Login = () => {
           description: "You have successfully logged in.",
         });
         navigate("/");
+      } else {
+        // This shouldn't happen normally, but let's handle it just in case
+        console.error("No user data received after successful login");
+        toast({
+          title: "Login Error",
+          description: "Unable to complete login. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error("Unexpected error during login:", error);
