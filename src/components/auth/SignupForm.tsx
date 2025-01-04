@@ -52,7 +52,11 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
     setLoading(true);
 
     try {
-      console.log("Attempting signup with email:", email.trim());
+      console.log("Starting signup process for:", email.trim());
+      
+      // Get the current URL for redirection
+      const redirectTo = `${window.location.origin}/login`;
+      console.log("Redirect URL set to:", redirectTo);
       
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
@@ -61,7 +65,7 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
           data: {
             username: username.trim(),
           },
-          emailRedirectTo: `${window.location.origin}/login`,
+          emailRedirectTo: redirectTo,
         },
       });
 
@@ -74,6 +78,8 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
           errorMessage = "Error creating user profile. Please try with a different username.";
         } else if (error.message.includes("User already registered")) {
           errorMessage = "This email is already registered. Please try logging in instead.";
+        } else if (error.message.includes("Email rate limit exceeded")) {
+          errorMessage = "Too many signup attempts. Please try again later.";
         }
 
         toast({
@@ -81,13 +87,23 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
           description: errorMessage,
           variant: "destructive",
         });
-      } else if (data?.user) {
-        console.log("Signup successful, verification email sent");
+        return;
+      }
+
+      if (data?.user) {
+        console.log("Signup successful, verification email sent to:", email.trim());
         toast({
-          title: "Success",
+          title: "Success!",
           description: "Please check your email to verify your account. Click the verification link to complete the signup process.",
         });
         onSuccess();
+      } else {
+        console.error("No user data received after successful signup");
+        toast({
+          title: "Error",
+          description: "Something went wrong during signup. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error("Unexpected error during signup:", error);
