@@ -29,6 +29,15 @@ const Signup = () => {
       return;
     }
 
+    if (!username.trim()) {
+      toast({
+        title: "Error",
+        description: "Username is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -37,8 +46,9 @@ const Signup = () => {
         password,
         options: {
           data: {
-            username,
+            username: username.trim(),
           },
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
@@ -56,6 +66,7 @@ const Signup = () => {
         description: error.message,
         variant: "destructive",
       });
+      console.error("Signup error:", error);
     } finally {
       setLoading(false);
     }
