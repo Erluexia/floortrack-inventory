@@ -52,6 +52,8 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
     setLoading(true);
 
     try {
+      console.log("Attempting signup with email:", email.trim());
+      
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -59,33 +61,39 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
           data: {
             username: username.trim(),
           },
-          emailRedirectTo: window.location.origin + '/login',
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error details:", error);
+        
+        let errorMessage = "An error occurred during signup. Please try again.";
+        
+        if (error.message.includes("Database error saving new user")) {
+          errorMessage = "Error creating user profile. Please try with a different username.";
+        } else if (error.message.includes("User already registered")) {
+          errorMessage = "This email is already registered. Please try logging in instead.";
+        }
 
-      if (data?.user) {
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else if (data?.user) {
+        console.log("Signup successful, verification email sent");
         toast({
           title: "Success",
-          description: "Account created successfully! Please check your email to verify your account.",
+          description: "Please check your email to verify your account. Click the verification link to complete the signup process.",
         });
         onSuccess();
       }
     } catch (error: any) {
-      console.error("Signup error:", error);
-      
-      let errorMessage = "An error occurred during signup. Please try again.";
-      
-      if (error.message.includes("Database error saving new user")) {
-        errorMessage = "Error creating user profile. Please try with a different username.";
-      } else if (error.message.includes("User already registered")) {
-        errorMessage = "This email is already registered. Please try logging in instead.";
-      }
-
+      console.error("Unexpected error during signup:", error);
       toast({
         title: "Error",
-        description: errorMessage,
+        description: "An unexpected error occurred. Please try again later.",
         variant: "destructive",
       });
     } finally {
