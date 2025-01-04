@@ -51,17 +51,21 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
       // Group items by name and combine quantities
       const groupedItems = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
+        // Ensure status is properly typed
+        const itemStatus = item.status as "good" | "maintenance" | "low";
+        
         if (!acc[item.name]) {
           acc[item.name] = {
             ...item,
-            maintenanceCount: item.status === 'maintenance' ? item.quantity : 0,
-            replacementCount: item.status === 'low' ? item.quantity : 0,
-            goodCount: item.status === 'good' ? item.quantity : 0,
+            status: itemStatus, // Use the properly typed status
+            maintenanceCount: itemStatus === 'maintenance' ? item.quantity : 0,
+            replacementCount: itemStatus === 'low' ? item.quantity : 0,
+            goodCount: itemStatus === 'good' ? item.quantity : 0,
           };
         } else {
-          if (item.status === 'maintenance') {
+          if (itemStatus === 'maintenance') {
             acc[item.name].maintenanceCount = (acc[item.name].maintenanceCount || 0) + item.quantity;
-          } else if (item.status === 'low') {
+          } else if (itemStatus === 'low') {
             acc[item.name].replacementCount = (acc[item.name].replacementCount || 0) + item.quantity;
           } else {
             acc[item.name].goodCount = (acc[item.name].goodCount || 0) + item.quantity;
