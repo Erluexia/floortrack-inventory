@@ -20,6 +20,16 @@ const Signup = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Input validation
+    if (!email.trim() || !password.trim() || !username.trim()) {
+      toast({
+        title: "Error",
+        description: "All fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -29,10 +39,10 @@ const Signup = () => {
       return;
     }
 
-    if (!username.trim()) {
+    if (password.length < 6) {
       toast({
         title: "Error",
-        description: "Username is required",
+        description: "Password must be at least 6 characters long",
         variant: "destructive",
       });
       return;
@@ -41,32 +51,44 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password.trim(),
         options: {
           data: {
             username: username.trim(),
           },
-          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error);
+        throw error;
+      }
+
+      if (data?.user) {
+        toast({
+          title: "Success",
+          description: "Account created successfully! Please check your email to verify your account.",
+        });
+        navigate("/login");
+      }
+    } catch (error: any) {
+      console.error("Detailed signup error:", error);
+      
+      let errorMessage = "An error occurred during signup. Please try again.";
+      
+      if (error.message.includes("Database error saving new user")) {
+        errorMessage = "Error creating user profile. Please try again with a different email.";
+      } else if (error.message.includes("User already registered")) {
+        errorMessage = "This email is already registered. Please try logging in instead.";
+      }
 
       toast({
-        title: "Success",
-        description: "Please check your email to verify your account",
-      });
-      
-      navigate("/login");
-    } catch (error: any) {
-      toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
-      console.error("Signup error:", error);
     } finally {
       setLoading(false);
     }
@@ -93,6 +115,7 @@ const Signup = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Username"
                 className="pl-10"
+                disabled={loading}
               />
             </div>
 
@@ -107,6 +130,7 @@ const Signup = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
                 className="pl-10"
+                disabled={loading}
               />
             </div>
 
@@ -121,11 +145,13 @@ const Signup = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 className="pl-10 pr-10"
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                disabled={loading}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5 text-gray-400" />
@@ -146,11 +172,13 @@ const Signup = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm password"
                 className="pl-10 pr-10"
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                disabled={loading}
               >
                 {showConfirmPassword ? (
                   <EyeOff className="h-5 w-5 text-gray-400" />
@@ -175,6 +203,7 @@ const Signup = () => {
               type="button"
               onClick={() => navigate("/login")}
               className="font-medium text-primary hover:text-primary/80"
+              disabled={loading}
             >
               Sign in
             </button>
