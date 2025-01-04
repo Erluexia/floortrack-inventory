@@ -17,10 +17,20 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !password) {
+    // Basic validation
+    if (!email.trim()) {
       toast({
-        title: "Missing Information",
-        description: "Please enter both email and password.",
+        title: "Missing Email",
+        description: "Please enter your email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!password) {
+      toast({
+        title: "Missing Password",
+        description: "Please enter your password.",
         variant: "destructive",
       });
       return;
@@ -35,32 +45,24 @@ const Login = () => {
       });
 
       if (error) {
-        console.error("Login error details:", error);
-        
-        // Handle specific error cases
         if (error.message.includes("Invalid login credentials")) {
           toast({
-            title: "Invalid Credentials",
-            description: "The email or password you entered is incorrect.",
-            variant: "destructive",
-          });
-        } else if (error.message.includes("Email not confirmed")) {
-          toast({
-            title: "Email Not Verified",
-            description: "Please check your email and verify your account before logging in.",
+            title: "Login Failed",
+            description: "Invalid email or password. Please check your credentials and try again.",
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Login Failed",
-            description: error.message,
+            title: "Login Error",
+            description: "An unexpected error occurred. Please try again.",
             variant: "destructive",
           });
         }
+        console.error("Login error:", error);
         return;
       }
 
-      if (data.user) {
+      if (data?.user) {
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
@@ -68,7 +70,7 @@ const Login = () => {
         navigate("/");
       }
     } catch (error: any) {
-      console.error("Unexpected login error:", error);
+      console.error("Unexpected error during login:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -100,6 +102,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
                 className="pl-10"
+                disabled={loading}
               />
             </div>
 
@@ -114,11 +117,13 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 className="pl-10 pr-10"
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                disabled={loading}
               >
                 {showPassword ? (
                   <EyeOff className="h-5 w-5 text-gray-400" />
@@ -143,6 +148,7 @@ const Login = () => {
               type="button"
               onClick={() => navigate("/signup")}
               className="font-medium text-primary hover:text-primary/80"
+              disabled={loading}
             >
               Sign up
             </button>
