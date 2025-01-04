@@ -19,20 +19,43 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email Not Verified",
+            description: "Please check your email and verify your account before logging in.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Login Failed",
+            description: "Please check your email and password and try again.",
+            variant: "destructive",
+          });
+        }
+        console.error("Login error:", error);
+        return;
+      }
 
-      navigate("/");
+      if (data.user) {
+        navigate("/");
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
+      }
     } catch (error: any) {
       toast({
         title: "Error",
         description: error.message,
         variant: "destructive",
       });
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
