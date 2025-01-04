@@ -59,13 +59,11 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
           data: {
             username: username.trim(),
           },
+          emailRedirectTo: window.location.origin + '/login',
         },
       });
 
-      if (error) {
-        console.error("Signup error:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.user) {
         toast({
@@ -75,12 +73,12 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
         onSuccess();
       }
     } catch (error: any) {
-      console.error("Detailed signup error:", error);
+      console.error("Signup error:", error);
       
       let errorMessage = "An error occurred during signup. Please try again.";
       
       if (error.message.includes("Database error saving new user")) {
-        errorMessage = "Error creating user profile. Please try again with a different email.";
+        errorMessage = "Error creating user profile. Please try with a different username.";
       } else if (error.message.includes("User already registered")) {
         errorMessage = "This email is already registered. Please try logging in instead.";
       }
