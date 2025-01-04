@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -59,13 +60,25 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       }
 
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to edit items",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Get user information
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select('username')
-        .eq('id', user?.id)
-        .single();
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+      }
 
       // Delete existing item
       const { error: deleteError } = await supabase
@@ -121,8 +134,8 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
           item_name: name,
           action_type: "edit",
           details: `Updated quantity to ${totalQuantity} (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
-          user_id: user?.id,
-          email: user?.email,
+          user_id: user.id,
+          email: user.email,
           username: userData?.username,
         });
 
@@ -154,6 +167,9 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       <DialogContent className="font-arial">
         <DialogHeader>
           <DialogTitle>Edit Item</DialogTitle>
+          <DialogDescription>
+            Make changes to your item here. Click save when you're done.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

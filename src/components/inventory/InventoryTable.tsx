@@ -25,6 +25,7 @@ interface InventoryItem {
   status: "good" | "maintenance" | "low";
   room_number: string;
   updated_at: string;
+  created_at: string;
   maintenanceCount?: number;
   replacementCount?: number;
   goodCount?: number;
@@ -50,17 +51,19 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
       // Group items by name and combine quantities
       const groupedItems = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
+        const status = item.status as "good" | "maintenance" | "low";
         if (!acc[item.name]) {
           acc[item.name] = {
             ...item,
-            maintenanceCount: item.status === 'maintenance' ? item.quantity : 0,
-            replacementCount: item.status === 'low' ? item.quantity : 0,
-            goodCount: item.status === 'good' ? item.quantity : 0,
+            status,
+            maintenanceCount: status === 'maintenance' ? item.quantity : 0,
+            replacementCount: status === 'low' ? item.quantity : 0,
+            goodCount: status === 'good' ? item.quantity : 0,
           };
         } else {
-          if (item.status === 'maintenance') {
+          if (status === 'maintenance') {
             acc[item.name].maintenanceCount = (acc[item.name].maintenanceCount || 0) + item.quantity;
-          } else if (item.status === 'low') {
+          } else if (status === 'low') {
             acc[item.name].replacementCount = (acc[item.name].replacementCount || 0) + item.quantity;
           } else {
             acc[item.name].goodCount = (acc[item.name].goodCount || 0) + item.quantity;
@@ -70,55 +73,81 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         return acc;
       }, {});
 
-      return Object.values(groupedItems) as InventoryItem[];
+      return Object.values(groupedItems);
     },
   });
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to delete items",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    const { error: deleteError } = await supabase
-      .from("items")
-      .delete()
-      .eq("name", itemToDelete.name)
-      .eq("room_number", roomNumber);
+      // Get user information
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (deleteError) {
+      if (userError) {
+        console.error("Error fetching user data:", userError);
+      }
+
+      const { error: deleteError } = await supabase
+        .from("items")
+        .delete()
+        .eq("name", itemToDelete.name)
+        .eq("room_number", roomNumber);
+
+      if (deleteError) {
+        toast({
+          title: "Error",
+          description: "Failed to delete item",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Log the delete activity
+      await supabase
+        .from("activity_logs")
+        .insert({
+          room_number: roomNumber,
+          item_name: itemToDelete.name,
+          action_type: "delete",
+          details: `Deleted item with quantity: ${itemToDelete.quantity}`,
+          user_id: user.id,
+          email: user.email,
+          username: userData?.username,
+        });
+
+      toast({
+        title: "Success",
+        description: "Item deleted successfully",
+      });
+      refetch();
+      setItemToDelete(null);
+    } catch (error) {
+      console.error("Delete error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete item",
+        description: "An unexpected error occurred",
         variant: "destructive",
       });
-      return;
     }
-
-    // Log the delete activity
-    const { error: logError } = await supabase
-      .from("activity_logs")
-      .insert({
-        room_number: roomNumber,
-        item_name: itemToDelete.name,
-        action_type: "delete",
-        details: `Deleted item with quantity: ${itemToDelete.quantity}`,
-        user_id: user?.id,
-      });
-
-    if (logError) {
-      console.error("Failed to log activity:", logError);
-    }
-
-    toast({
-      title: "Success",
-      description: "Item deleted successfully",
-    });
-    refetch();
-    setItemToDelete(null);
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-arial">
       <div className="flex justify-end">
         <AddItemDialog roomNumber={roomNumber} onItemAdded={refetch} />
       </div>
