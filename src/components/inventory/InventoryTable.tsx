@@ -44,7 +44,30 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         console.error("Error fetching items:", error);
         throw error;
       }
-      return data as InventoryItem[];
+
+      // Group items by name and combine quantities
+      const groupedItems = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
+        if (!acc[item.name]) {
+          acc[item.name] = {
+            ...item,
+            maintenanceCount: item.status === 'maintenance' ? item.quantity : 0,
+            replacementCount: item.status === 'low' ? item.quantity : 0,
+            goodCount: item.status === 'good' ? item.quantity : 0,
+          };
+        } else {
+          if (item.status === 'maintenance') {
+            acc[item.name].maintenanceCount = (acc[item.name].maintenanceCount || 0) + item.quantity;
+          } else if (item.status === 'low') {
+            acc[item.name].replacementCount = (acc[item.name].replacementCount || 0) + item.quantity;
+          } else {
+            acc[item.name].goodCount = (acc[item.name].goodCount || 0) + item.quantity;
+          }
+          acc[item.name].quantity += item.quantity;
+        }
+        return acc;
+      }, {});
+
+      return Object.values(groupedItems) as InventoryItem[];
     },
   });
 
@@ -56,7 +79,8 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
     const { error: deleteError } = await supabase
       .from("items")
       .delete()
-      .eq("id", itemToDelete.id);
+      .eq("name", itemToDelete.name)
+      .eq("room_number", roomNumber);
 
     if (deleteError) {
       toast({
@@ -90,14 +114,6 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
     setItemToDelete(null);
   };
 
-  const getMaintenanceCount = (item: InventoryItem) => {
-    return item.status === "maintenance" ? item.quantity : 0;
-  };
-
-  const getReplacementCount = (item: InventoryItem) => {
-    return item.status === "low" ? item.quantity : 0;
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
@@ -122,8 +138,8 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                   <div className="font-medium">{item.name}</div>
                 </TableCell>
                 <TableCell>{item.quantity}</TableCell>
-                <TableCell>{getMaintenanceCount(item)}</TableCell>
-                <TableCell>{getReplacementCount(item)}</TableCell>
+                <TableCell>{item.maintenanceCount || 0}</TableCell>
+                <TableCell>{item.replacementCount || 0}</TableCell>
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <EditItemDialog item={item} roomNumber={roomNumber} onItemUpdated={refetch} />

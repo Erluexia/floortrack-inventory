@@ -36,28 +36,69 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       return;
     }
 
-    let status = 'good';
-    if (maintenanceQuantity > 0) status = 'maintenance';
-    if (replacementQuantity > 0) status = 'low';
-
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { error } = await supabase
-      .from("items")
-      .insert({
-        name,
-        quantity: totalQuantity,
-        status,
-        room_number: roomNumber,
-      });
+    // Create separate items for different statuses
+    if (maintenanceQuantity > 0) {
+      const { error: maintenanceError } = await supabase
+        .from("items")
+        .insert({
+          name,
+          quantity: maintenanceQuantity,
+          status: 'maintenance',
+          room_number: roomNumber,
+        });
 
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add item",
-        variant: "destructive",
-      });
-      return;
+      if (maintenanceError) {
+        toast({
+          title: "Error",
+          description: "Failed to add maintenance items",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    if (replacementQuantity > 0) {
+      const { error: replacementError } = await supabase
+        .from("items")
+        .insert({
+          name,
+          quantity: replacementQuantity,
+          status: 'low',
+          room_number: roomNumber,
+        });
+
+      if (replacementError) {
+        toast({
+          title: "Error",
+          description: "Failed to add replacement items",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    // Add remaining items as 'good' status
+    const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
+    if (goodQuantity > 0) {
+      const { error: goodError } = await supabase
+        .from("items")
+        .insert({
+          name,
+          quantity: goodQuantity,
+          status: 'good',
+          room_number: roomNumber,
+        });
+
+      if (goodError) {
+        toast({
+          title: "Error",
+          description: "Failed to add good items",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Log the activity
@@ -77,7 +118,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
 
     toast({
       title: "Success",
-      description: "Item added successfully",
+      description: "Items added successfully",
     });
     setIsOpen(false);
     setName("");
