@@ -13,10 +13,12 @@ export type Database = {
         Row: {
           action_type: string
           created_at: string
+          current_status: string | null
           details: string
           email: string | null
           id: string
           item_name: string
+          previous_status: string | null
           room_number: string
           user_id: string | null
           username: string | null
@@ -24,10 +26,12 @@ export type Database = {
         Insert: {
           action_type: string
           created_at?: string
+          current_status?: string | null
           details: string
           email?: string | null
           id?: string
           item_name: string
+          previous_status?: string | null
           room_number: string
           user_id?: string | null
           username?: string | null
@@ -35,10 +39,12 @@ export type Database = {
         Update: {
           action_type?: string
           created_at?: string
+          current_status?: string | null
           details?: string
           email?: string | null
           id?: string
           item_name?: string
+          previous_status?: string | null
           room_number?: string
           user_id?: string | null
           username?: string | null

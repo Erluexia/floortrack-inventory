@@ -26,6 +26,8 @@ interface ActivityLog {
   user_id: string | null;
   email: string | null;
   username: string | null;
+  previous_status: string | null;
+  current_status: string | null;
 }
 
 export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
@@ -42,7 +44,9 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
           created_at,
           user_id,
           email,
-          username
+          username,
+          previous_status,
+          current_status
         `)
         .eq("room_number", roomNumber)
         .order("created_at", { ascending: false });
@@ -55,6 +59,31 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
       return data;
     },
   });
+
+  const getStatusDisplay = (log: ActivityLog) => {
+    if (log.action_type === 'status_change' && log.previous_status && log.current_status) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-1 rounded text-sm ${
+            log.previous_status === 'good' ? 'bg-green-100 text-green-800' :
+            log.previous_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-red-100 text-red-800'
+          }`}>
+            {log.previous_status}
+          </span>
+          <span>→</span>
+          <span className={`px-2 py-1 rounded text-sm ${
+            log.current_status === 'good' ? 'bg-green-100 text-green-800' :
+            log.current_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-red-100 text-red-800'
+          }`}>
+            {log.current_status}
+          </span>
+        </div>
+      );
+    }
+    return log.action_type;
+  };
 
   return (
     <div className="mt-8 font-arial">
@@ -82,7 +111,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
                       </CollapsibleTrigger>
                     </TableCell>
                     <TableCell className="font-medium">{log.item_name}</TableCell>
-                    <TableCell>{log.action_type}</TableCell>
+                    <TableCell>{getStatusDisplay(log)}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(log.created_at).toLocaleString()}
                     </TableCell>
@@ -93,7 +122,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <User className="h-4 w-4" />
-                            <span>{log.username || "Unknown User"}</span>
+                            <span className="font-semibold">{log.username || "Unknown User"}</span>
                             {log.email && (
                               <>
                                 <span>•</span>
