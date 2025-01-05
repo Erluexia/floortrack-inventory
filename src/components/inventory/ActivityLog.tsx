@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, User } from "lucide-react";
+import { ChevronRight, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ActivityLogProps {
