@@ -9,6 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ActivityLogProps {
   roomNumber: string;
@@ -60,32 +63,55 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>Item</TableHead>
               <TableHead>Action</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Details</TableHead>
               <TableHead>Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {logs?.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell className="font-medium">{log.item_name}</TableCell>
-                <TableCell>{log.action_type}</TableCell>
-                <TableCell>{log.username || "Unknown User"}</TableCell>
-                <TableCell>{log.email || "N/A"}</TableCell>
-                <TableCell className="max-w-[200px] truncate">
-                  {log.details}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {new Date(log.created_at).toLocaleString()}
-                </TableCell>
-              </TableRow>
+              <Collapsible key={log.id} asChild>
+                <>
+                  <TableRow className="cursor-pointer hover:bg-gray-50">
+                    <TableCell className="w-4">
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
+                          <ChevronRight className="h-4 w-4 transition-transform duration-200 [&[data-state=open]>svg]:rotate-90" />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </TableCell>
+                    <TableCell className="font-medium">{log.item_name}</TableCell>
+                    <TableCell>{log.action_type}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(log.created_at).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                  <CollapsibleContent asChild>
+                    <TableRow className="bg-gray-50">
+                      <TableCell colSpan={4} className="p-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                            <User className="h-4 w-4" />
+                            <span>{log.username || "Unknown User"}</span>
+                            {log.email && (
+                              <>
+                                <span>•</span>
+                                <span>{log.email}</span>
+                              </>
+                            )}
+                          </div>
+                          <p className="text-sm">{log.details}</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </CollapsibleContent>
+                </>
+              </Collapsible>
             ))}
             {(!logs || logs.length === 0) && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={4} className="text-center text-muted-foreground">
                   No activity recorded yet.
                 </TableCell>
               </TableRow>
