@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Room from "./pages/Room";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Profile from "./pages/Profile";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient({
@@ -64,6 +65,10 @@ const App = () => {
             <Route
               path="/signup"
               element={!session ? <Signup /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/profile"
+              element={session ? <Profile /> : <Navigate to="/login" />}
             />
           </Routes>
         </BrowserRouter>
