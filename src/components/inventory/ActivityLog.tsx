@@ -65,26 +65,36 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
   const getStatusDisplay = (log: ActivityLog) => {
     if (log.action_type === 'status_change' && log.previous_status && log.current_status) {
       return (
-        <div className="flex items-center gap-2">
-          <span className={`px-2 py-1 rounded text-sm ${
-            log.previous_status === 'good' ? 'bg-green-100 text-green-800' :
-            log.previous_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            {log.previous_status}
-          </span>
-          <span>→</span>
-          <span className={`px-2 py-1 rounded text-sm ${
-            log.current_status === 'good' ? 'bg-green-100 text-green-800' :
-            log.current_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            {log.current_status}
-          </span>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 rounded text-sm ${
+              log.previous_status === 'good' ? 'bg-green-100 text-green-800' :
+              log.previous_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {log.previous_status}
+            </span>
+            <span>→</span>
+            <span className={`px-2 py-1 rounded text-sm ${
+              log.current_status === 'good' ? 'bg-green-100 text-green-800' :
+              log.current_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-red-100 text-red-800'
+            }`}>
+              {log.current_status}
+            </span>
+          </div>
+          <p className="text-sm text-gray-600">
+            {log.details}
+          </p>
         </div>
       );
     }
-    return log.action_type;
+    return (
+      <div className="flex flex-col gap-1">
+        <span>{log.action_type}</span>
+        <p className="text-sm text-gray-600">{log.details}</p>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -147,7 +157,6 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
                               </>
                             )}
                           </div>
-                          <p className="text-sm">{log.details}</p>
                         </div>
                       </TableCell>
                     </TableRow>
