@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 interface PreviousStatusProps {
   roomNumber: string;
@@ -18,7 +20,7 @@ interface ItemHistory {
 }
 
 export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
-  const { data: history, isLoading } = useQuery({
+  const { data: history, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["items-history", roomNumber],
     queryFn: async () => {
       console.log("Fetching items history for room:", roomNumber);
@@ -44,6 +46,17 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isRefetching}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>

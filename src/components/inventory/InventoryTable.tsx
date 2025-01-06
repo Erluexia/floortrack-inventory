@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,9 +35,10 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const { toast } = useToast();
 
-  const { data: items, refetch } = useQuery({
+  const { data: items, refetch, isRefetching } = useQuery({
     queryKey: ["items", roomNumber],
     queryFn: async () => {
+      console.log("Fetching items for room:", roomNumber);
       const { data, error } = await supabase
         .from("items")
         .select("*")
@@ -49,15 +50,16 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         throw error;
       }
 
+      console.log("Fetched items:", data);
+
       // Group items by name and combine quantities
       const groupedItems = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
-        // Ensure status is properly typed
         const itemStatus = item.status as "good" | "maintenance" | "low";
         
         if (!acc[item.name]) {
           acc[item.name] = {
             ...item,
-            status: itemStatus, // Use the properly typed status
+            status: itemStatus,
             maintenanceCount: itemStatus === 'maintenance' ? item.quantity : 0,
             replacementCount: itemStatus === 'low' ? item.quantity : 0,
             goodCount: itemStatus === 'good' ? item.quantity : 0,
@@ -93,12 +95,33 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         return;
       }
 
-      // Get user information only if we have a valid user ID
       const { data: userData } = user.id ? await supabase
         .from('profiles')
         .select('username')
         .eq('id', user.id)
         .maybeSingle() : { data: null };
+
+      // First, get the current item details for history
+      const { data: currentItems } = await supabase
+        .from("items")
+        .select("*")
+        .eq("name", itemToDelete.name)
+        .eq("room_number", roomNumber);
+
+      if (currentItems && currentItems.length > 0) {
+        // Record history for each item being deleted
+        for (const item of currentItems) {
+          await supabase
+            .from("items_history")
+            .insert({
+              item_id: item.id,
+              name: item.name,
+              quantity: item.quantity,
+              status: item.status,
+              room_number: item.room_number,
+            });
+        }
+      }
 
       const { error: deleteError } = await supabase
         .from("items")
@@ -148,7 +171,16 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
   return (
     <div className="space-y-4 font-arial">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isRefetching}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
         <AddItemDialog roomNumber={roomNumber} onItemAdded={refetch} />
       </div>
 
@@ -186,6 +218,13 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                 </TableCell>
               </TableRow>
             ))}
+            {(!items || items.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                  No items found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
