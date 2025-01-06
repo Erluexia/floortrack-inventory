@@ -80,6 +80,27 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
         console.error("Error fetching user data:", userError);
       }
 
+      // Record item history before deletion
+      const { data: currentItems } = await supabase
+        .from("items")
+        .select("*")
+        .eq("name", item.name)
+        .eq("room_number", roomNumber);
+
+      if (currentItems) {
+        for (const currentItem of currentItems) {
+          await supabase
+            .from("items_history")
+            .insert({
+              item_id: currentItem.id,
+              name: currentItem.name,
+              quantity: currentItem.quantity,
+              status: currentItem.status,
+              room_number: currentItem.room_number,
+            });
+        }
+      }
+
       // Delete existing item
       const { error: deleteError } = await supabase
         .from("items")

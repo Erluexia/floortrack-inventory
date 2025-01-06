@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronRight, User } from "lucide-react";
+import { ChevronRight, User, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ActivityLogProps {
@@ -31,7 +31,7 @@ interface ActivityLog {
 }
 
 export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
-  const { data: logs, isLoading } = useQuery({
+  const { data: logs, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["activity_logs", roomNumber],
     queryFn: async () => {
       console.log("Fetching activity logs for room:", roomNumber);
@@ -93,7 +93,18 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
 
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-semibold mb-4">Activity Log</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">Activity Log</h3>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          disabled={isRefetching}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefetching ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
       <ScrollArea className="h-[400px] rounded-md border">
         <Table>
           <TableHeader>
