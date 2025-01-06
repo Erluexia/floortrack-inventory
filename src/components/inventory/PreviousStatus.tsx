@@ -35,8 +35,32 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         throw error;
       }
 
-      console.log("Fetched items history:", data);
-      return data as ItemHistory[];
+      // Group items by change timestamp to show complete state at each change
+      const groupedHistory = data.reduce((acc: { [key: string]: any }, item) => {
+        const timestamp = item.changed_at;
+        if (!acc[timestamp]) {
+          acc[timestamp] = {
+            timestamp,
+            items: {},
+          };
+        }
+        
+        // Store item details with its status
+        acc[timestamp].items[item.name] = {
+          name: item.name,
+          total: item.quantity,
+          maintenance: item.status === 'maintenance' ? item.quantity : 0,
+          replacement: item.status === 'low' ? item.quantity : 0,
+          good: item.status === 'good' ? item.quantity : 0,
+        };
+        
+        return acc;
+      }, {});
+
+      // Convert to array and sort by timestamp
+      return Object.values(groupedHistory).sort((a: any, b: any) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
     },
   });
 
@@ -61,34 +85,30 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Timestamp</TableHead>
               <TableHead>Item Name</TableHead>
-              <TableHead>Previous Quantity</TableHead>
-              <TableHead>Previous Status</TableHead>
-              <TableHead>Changed At</TableHead>
+              <TableHead>Total Quantity</TableHead>
+              <TableHead>Need Maintenance</TableHead>
+              <TableHead>Need Replacement</TableHead>
+              <TableHead>Good Condition</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history?.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>
-                  <span className={`capitalize px-2 py-1 rounded text-sm ${
-                    item.status === 'good' ? 'bg-green-100 text-green-800' :
-                    item.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {item.status}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss')}
-                </TableCell>
-              </TableRow>
+            {history?.map((historyEntry: any) => (
+              Object.values(historyEntry.items).map((item: any) => (
+                <TableRow key={`${historyEntry.timestamp}-${item.name}`}>
+                  <TableCell>{format(new Date(historyEntry.timestamp), 'MMM d, yyyy HH:mm:ss')}</TableCell>
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell>{item.total}</TableCell>
+                  <TableCell>{item.maintenance}</TableCell>
+                  <TableCell>{item.replacement}</TableCell>
+                  <TableCell>{item.good}</TableCell>
+                </TableRow>
+              ))
             ))}
             {(!history || history.length === 0) && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
                   No previous changes recorded
                 </TableCell>
               </TableRow>

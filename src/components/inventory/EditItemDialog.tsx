@@ -30,13 +30,28 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(item.quantity.toString());
-  const [maintenanceCount, setMaintenanceCount] = useState(
-    item.status === "maintenance" ? item.quantity.toString() : "0"
-  );
-  const [replacementCount, setReplacementCount] = useState(
-    item.status === "low" ? item.quantity.toString() : "0"
-  );
+  const [maintenanceCount, setMaintenanceCount] = useState("0");
+  const [replacementCount, setReplacementCount] = useState("0");
   const { toast } = useToast();
+
+  // Initialize status counts when dialog opens
+  const initializeStatusCounts = async () => {
+    const { data: items } = await supabase
+      .from("items")
+      .select("*")
+      .eq("name", item.name)
+      .eq("room_number", roomNumber);
+
+    if (items) {
+      const maintenance = items.find(i => i.status === 'maintenance')?.quantity || 0;
+      const replacement = items.find(i => i.status === 'low')?.quantity || 0;
+      const total = items.reduce((sum, i) => sum + i.quantity, 0);
+
+      setMaintenanceCount(maintenance.toString());
+      setReplacementCount(replacement.toString());
+      setQuantity(total.toString());
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +194,12 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      setOpen(newOpen);
+      if (newOpen) {
+        initializeStatusCounts();
+      }
+    }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" disabled={isSubmitting}>
           <Edit2 className="h-4 w-4" />
