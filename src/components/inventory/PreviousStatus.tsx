@@ -18,9 +18,10 @@ interface ItemHistory {
 }
 
 export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
-  const { data: history } = useQuery({
+  const { data: history, isLoading } = useQuery({
     queryKey: ["items-history", roomNumber],
     queryFn: async () => {
+      console.log("Fetching items history for room:", roomNumber);
       const { data, error } = await supabase
         .from("items_history")
         .select("*")
@@ -32,9 +33,14 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         throw error;
       }
 
+      console.log("Fetched items history:", data);
       return data as ItemHistory[];
     },
   });
+
+  if (isLoading) {
+    return <div>Loading previous status...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -54,10 +60,10 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>
-                  <span className={`capitalize ${
-                    item.status === 'good' ? 'text-green-600' :
-                    item.status === 'maintenance' ? 'text-yellow-600' :
-                    'text-red-600'
+                  <span className={`capitalize px-2 py-1 rounded text-sm ${
+                    item.status === 'good' ? 'bg-green-100 text-green-800' :
+                    item.status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
                   }`}>
                     {item.status}
                   </span>

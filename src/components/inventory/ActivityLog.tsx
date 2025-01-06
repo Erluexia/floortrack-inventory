@@ -31,9 +31,10 @@ interface ActivityLog {
 }
 
 export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
-  const { data: logs } = useQuery<ActivityLog[]>({
+  const { data: logs, isLoading } = useQuery({
     queryKey: ["activity_logs", roomNumber],
     queryFn: async () => {
+      console.log("Fetching activity logs for room:", roomNumber);
       const { data, error } = await supabase
         .from("activity_logs")
         .select(`
@@ -56,6 +57,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
+      console.log("Fetched activity logs:", data);
       return data;
     },
   });
@@ -85,8 +87,12 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
     return log.action_type;
   };
 
+  if (isLoading) {
+    return <div>Loading activity logs...</div>;
+  }
+
   return (
-    <div className="mt-8 font-arial">
+    <div className="mt-8">
       <h3 className="text-lg font-semibold mb-4">Activity Log</h3>
       <ScrollArea className="h-[400px] rounded-md border">
         <Table>
@@ -106,7 +112,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
                     <TableCell className="w-4">
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
-                          <ChevronRight className="h-4 w-4 transition-transform duration-200 [&[data-state=open]>svg]:rotate-90" />
+                          <ChevronRight className="h-4 w-4" />
                         </Button>
                       </CollapsibleTrigger>
                     </TableCell>
