@@ -51,7 +51,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         return [];
       }
 
-      return data.reduce((acc: { [key: string]: InventoryItem }, item) => {
+      const itemsMap = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
         const itemStatus = item.status as "good" | "maintenance" | "low";
         
         if (!acc[item.name]) {
@@ -74,6 +74,9 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         }
         return acc;
       }, {});
+
+      // Convert the object back to an array
+      return Object.values(itemsMap);
     },
   });
 
@@ -215,29 +218,30 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items?.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <div className="font-medium">{item.name}</div>
-                </TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>{item.maintenanceCount || 0}</TableCell>
-                <TableCell>{item.replacementCount || 0}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-2">
-                    <EditItemDialog item={item} roomNumber={roomNumber} onItemUpdated={refetch} />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setItemToDelete(item)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {(!items || items.length === 0) && (
+            {items && items.length > 0 ? (
+              items.map((item: InventoryItem) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <div className="font-medium">{item.name}</div>
+                  </TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{item.maintenanceCount || 0}</TableCell>
+                  <TableCell>{item.replacementCount || 0}</TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <EditItemDialog item={item} roomNumber={roomNumber} onItemUpdated={refetch} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setItemToDelete(item)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                   No items found
