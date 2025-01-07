@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 
 interface PreviousStatusProps {
   roomNumber: string;
@@ -51,7 +52,6 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
           total: item.quantity,
           maintenance: item.status === 'maintenance' ? item.quantity : 0,
           replacement: item.status === 'low' ? item.quantity : 0,
-          good: item.status === 'good' ? item.quantity : 0,
         };
         
         return acc;
@@ -63,6 +63,29 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
       );
     },
   });
+
+  // Subscribe to real-time changes
+  useEffect(() => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items_history'
+        },
+        () => {
+          console.log('Items history changed, refreshing data');
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   if (isLoading) {
     return <div>Loading previous status...</div>;
@@ -90,7 +113,6 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
               <TableHead>Total Quantity</TableHead>
               <TableHead>Need Maintenance</TableHead>
               <TableHead>Need Replacement</TableHead>
-              <TableHead>Good Condition</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -102,13 +124,12 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
                   <TableCell>{item.total}</TableCell>
                   <TableCell>{item.maintenance}</TableCell>
                   <TableCell>{item.replacement}</TableCell>
-                  <TableCell>{item.good}</TableCell>
                 </TableRow>
               ))
             ))}
             {(!history || history.length === 0) && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-4 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                   No previous changes recorded
                 </TableCell>
               </TableRow>
