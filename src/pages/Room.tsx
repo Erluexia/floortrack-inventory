@@ -1,13 +1,31 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ActivityLog } from "@/components/inventory/ActivityLog";
 import { PreviousStatus } from "@/components/inventory/PreviousStatus";
+import { useEffect } from "react";
+import { toast } from "@/components/ui/use-toast";
 
 const Room = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!id || !/^\d{3}$/.test(id)) {
+      toast({
+        title: "Invalid Room",
+        description: "The room number is invalid",
+        variant: "destructive",
+      });
+      navigate("/");
+    }
+  }, [id, navigate]);
+
+  if (!id) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -28,15 +46,15 @@ const Room = () => {
             </TabsList>
             
             <TabsContent value="current">
-              <InventoryTable roomNumber={id || ""} />
+              <InventoryTable roomNumber={id} />
             </TabsContent>
             
             <TabsContent value="previous">
-              <PreviousStatus roomNumber={id || ""} />
+              <PreviousStatus roomNumber={id} />
             </TabsContent>
             
             <TabsContent value="activity">
-              <ActivityLog roomNumber={id || ""} />
+              <ActivityLog roomNumber={id} />
             </TabsContent>
           </Tabs>
         </main>

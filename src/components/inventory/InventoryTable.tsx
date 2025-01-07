@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2, RefreshCw } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AddItemDialog } from "./AddItemDialog";
 import { EditItemDialog } from "./EditItemDialog";
+import { handleSupabaseError } from "@/utils/errorHandling";
 
 interface InventoryItem {
   id: string;
@@ -46,14 +47,11 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         .order("name");
 
       if (error) {
-        console.error("Error fetching items:", error);
-        throw error;
+        handleSupabaseError(error, "Error fetching items");
+        return [];
       }
 
-      console.log("Fetched items:", data);
-
-      // Group items by name and combine quantities
-      const groupedItems = data.reduce((acc: { [key: string]: InventoryItem }, item) => {
+      return data.reduce((acc: { [key: string]: InventoryItem }, item) => {
         const itemStatus = item.status as "good" | "maintenance" | "low";
         
         if (!acc[item.name]) {
@@ -76,10 +74,31 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         }
         return acc;
       }, {});
-
-      return Object.values(groupedItems);
     },
   });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('items-channel')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items',
+          filter: `room_number=eq.${roomNumber}`,
+        },
+        () => {
+          console.log('Items changed, refreshing data');
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [roomNumber, refetch]);
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
