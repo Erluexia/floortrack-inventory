@@ -12,6 +12,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronRight, User, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 interface ActivityLogProps {
   roomNumber: string;
@@ -57,42 +58,46 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         throw error;
       }
       
-      console.log("Fetched activity logs:", data);
       return data;
     },
   });
 
-  const getStatusDisplay = (log: ActivityLog) => {
+  const getStatusBadgeClass = (status: string | null) => {
+    switch (status) {
+      case 'good':
+        return 'bg-green-100 text-green-800';
+      case 'maintenance':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatActionMessage = (log: ActivityLog) => {
     if (log.action_type === 'status_change' && log.previous_status && log.current_status) {
       return (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 rounded text-sm ${
-              log.previous_status === 'good' ? 'bg-green-100 text-green-800' :
-              log.previous_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-red-100 text-red-800'
-            }`}>
+          <p className="text-sm">
+            <span className="font-medium">{log.username || "Unknown user"}</span>
+            {" has changed "}
+            <span className="font-medium">{log.item_name}</span>
+            {" from "}
+            <span className={`px-2 py-1 rounded ${getStatusBadgeClass(log.previous_status)}`}>
               {log.previous_status}
             </span>
-            <span>→</span>
-            <span className={`px-2 py-1 rounded text-sm ${
-              log.current_status === 'good' ? 'bg-green-100 text-green-800' :
-              log.current_status === 'maintenance' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-red-100 text-red-800'
-            }`}>
+            {" to "}
+            <span className={`px-2 py-1 rounded ${getStatusBadgeClass(log.current_status)}`}>
               {log.current_status}
             </span>
-          </div>
-          <p className="text-sm text-gray-600">
-            {log.details}
           </p>
         </div>
       );
     }
     return (
       <div className="flex flex-col gap-1">
-        <span>{log.action_type}</span>
-        <p className="text-sm text-gray-600">{log.details}</p>
+        <span>{log.details}</span>
       </div>
     );
   };
@@ -119,10 +124,9 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Item</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
               <TableHead>Action</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead className="w-[200px]">Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -130,17 +134,16 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
               <Collapsible key={log.id} asChild>
                 <>
                   <TableRow className="cursor-pointer hover:bg-gray-50">
-                    <TableCell className="w-4">
+                    <TableCell>
                       <CollapsibleTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
                           <ChevronRight className="h-4 w-4" />
                         </Button>
                       </CollapsibleTrigger>
                     </TableCell>
-                    <TableCell className="font-medium">{log.item_name}</TableCell>
-                    <TableCell>{getStatusDisplay(log)}</TableCell>
+                    <TableCell>{formatActionMessage(log)}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(log.created_at).toLocaleString()}
+                      {format(new Date(log.created_at), 'MMM d, yyyy HH:mm:ss')}
                     </TableCell>
                   </TableRow>
                   <CollapsibleContent asChild>
@@ -166,7 +169,7 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
             ))}
             {(!logs || logs.length === 0) && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground">
+                <TableCell colSpan={3} className="text-center text-muted-foreground">
                   No activity recorded yet.
                 </TableCell>
               </TableRow>

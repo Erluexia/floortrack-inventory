@@ -36,8 +36,8 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         throw error;
       }
 
-      // Group items by change timestamp to show complete state at each change
-      const groupedHistory = data.reduce((acc: { [key: string]: any }, item) => {
+      // Group items by timestamp and calculate totals
+      const groupedHistory = data.reduce((acc: { [key: string]: any }, item: ItemHistory) => {
         const timestamp = item.changed_at;
         if (!acc[timestamp]) {
           acc[timestamp] = {
@@ -46,21 +46,27 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
           };
         }
         
-        // Store item details with its status
-        acc[timestamp].items[item.name] = {
-          name: item.name,
-          total: item.quantity,
-          maintenance: item.status === 'maintenance' ? item.quantity : 0,
-          replacement: item.status === 'low' ? item.quantity : 0,
-        };
+        if (!acc[timestamp].items[item.name]) {
+          acc[timestamp].items[item.name] = {
+            name: item.name,
+            total: 0,
+            maintenance: 0,
+            replacement: 0,
+          };
+        }
+        
+        const itemEntry = acc[timestamp].items[item.name];
+        itemEntry.total += item.quantity;
+        if (item.status === 'maintenance') {
+          itemEntry.maintenance += item.quantity;
+        } else if (item.status === 'low') {
+          itemEntry.replacement += item.quantity;
+        }
         
         return acc;
       }, {});
 
-      // Convert to array and sort by timestamp
-      return Object.values(groupedHistory).sort((a: any, b: any) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
+      return Object.values(groupedHistory);
     },
   });
 
