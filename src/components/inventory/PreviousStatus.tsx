@@ -24,7 +24,6 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
   const { data: history, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["items-history", roomNumber],
     queryFn: async () => {
-      console.log("Fetching items history for room:", roomNumber);
       const { data, error } = await supabase
         .from("items_history")
         .select("*")
@@ -36,37 +35,7 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         throw error;
       }
 
-      // Group items by timestamp and calculate totals
-      const groupedHistory = data.reduce((acc: { [key: string]: any }, item: ItemHistory) => {
-        const timestamp = item.changed_at;
-        if (!acc[timestamp]) {
-          acc[timestamp] = {
-            timestamp,
-            items: {},
-          };
-        }
-        
-        if (!acc[timestamp].items[item.name]) {
-          acc[timestamp].items[item.name] = {
-            name: item.name,
-            total: 0,
-            maintenance: 0,
-            replacement: 0,
-          };
-        }
-        
-        const itemEntry = acc[timestamp].items[item.name];
-        itemEntry.total += item.quantity;
-        if (item.status === 'maintenance') {
-          itemEntry.maintenance += item.quantity;
-        } else if (item.status === 'low') {
-          itemEntry.replacement += item.quantity;
-        }
-        
-        return acc;
-      }, {});
-
-      return Object.values(groupedHistory);
+      return data;
     },
   });
 
@@ -116,26 +85,22 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
             <TableRow>
               <TableHead>Timestamp</TableHead>
               <TableHead>Item Name</TableHead>
-              <TableHead>Total Quantity</TableHead>
-              <TableHead>Need Maintenance</TableHead>
-              <TableHead>Need Replacement</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history?.map((historyEntry: any) => (
-              Object.values(historyEntry.items).map((item: any) => (
-                <TableRow key={`${historyEntry.timestamp}-${item.name}`}>
-                  <TableCell>{format(new Date(historyEntry.timestamp), 'MMM d, yyyy HH:mm:ss')}</TableCell>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.total}</TableCell>
-                  <TableCell>{item.maintenance}</TableCell>
-                  <TableCell>{item.replacement}</TableCell>
-                </TableRow>
-              ))
+            {history?.map((item: ItemHistory) => (
+              <TableRow key={item.id}>
+                <TableCell>{format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss')}</TableCell>
+                <TableCell className="font-medium">{item.name}</TableCell>
+                <TableCell>{item.quantity}</TableCell>
+                <TableCell>{item.status}</TableCell>
+              </TableRow>
             ))}
             {(!history || history.length === 0) && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
                   No previous changes recorded
                 </TableCell>
               </TableRow>
