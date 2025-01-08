@@ -10,7 +10,7 @@ interface ItemData {
 
 export const createItem = async (itemData: ItemData) => {
   const { error } = await supabase
-    .from("items")
+    .from("current_status")
     .insert(itemData);
 
   if (error) {
@@ -25,7 +25,7 @@ export const updateItem = async (
   itemData: Partial<ItemData>
 ) => {
   const { error } = await supabase
-    .from("items")
+    .from("current_status")
     .update(itemData)
     .eq('id', id);
 

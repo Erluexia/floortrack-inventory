@@ -46,7 +46,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       // Create separate items for different statuses
       if (maintenanceQuantity > 0) {
         const { error: maintenanceError } = await supabase
-          .from("items")
+          .from("current_status")
           .insert({
             name,
             quantity: maintenanceQuantity,
@@ -66,7 +66,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
 
       if (replacementQuantity > 0) {
         const { error: replacementError } = await supabase
-          .from("items")
+          .from("current_status")
           .insert({
             name,
             quantity: replacementQuantity,
@@ -88,7 +88,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
       if (goodQuantity > 0) {
         const { error: goodError } = await supabase
-          .from("items")
+          .from("current_status")
           .insert({
             name,
             quantity: goodQuantity,

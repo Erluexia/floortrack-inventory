@@ -41,7 +41,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
     queryFn: async () => {
       console.log("Fetching items for room:", roomNumber);
       const { data, error } = await supabase
-        .from("items")
+        .from("current_status")
         .select("*")
         .eq("room_number", roomNumber)
         .order("name");
@@ -94,7 +94,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         {
           event: '*',
           schema: 'public',
-          table: 'items',
+          table: 'current_status',
           filter: `room_number=eq.${roomNumber}`,
         },
         () => {
@@ -131,7 +131,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
       // First, get the current item details for history
       const { data: currentItems } = await supabase
-        .from("items")
+        .from("current_status")
         .select("*")
         .eq("name", itemToDelete.name)
         .eq("room_number", roomNumber);
@@ -140,7 +140,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         // Record history for each item being deleted
         for (const item of currentItems) {
           await supabase
-            .from("items_history")
+            .from("previous_status")
             .insert({
               item_id: item.id,
               name: item.name,
@@ -152,7 +152,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
       }
 
       const { error: deleteError } = await supabase
-        .from("items")
+        .from("current_status")
         .delete()
         .eq("name", itemToDelete.name)
         .eq("room_number", roomNumber);

@@ -7,7 +7,7 @@ export const DashboardStats = () => {
     queryKey: ['itemStats'],
     queryFn: async () => {
       const { data: items, error } = await supabase
-        .from('items')
+        .from('current_status')
         .select('status, quantity');
 
       if (error) throw error;

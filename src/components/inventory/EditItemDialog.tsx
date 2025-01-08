@@ -37,7 +37,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
   // Initialize status counts when dialog opens
   const initializeStatusCounts = async () => {
     const { data: items } = await supabase
-      .from("items")
+      .from("current_status")
       .select("*")
       .eq("name", item.name)
       .eq("room_number", roomNumber);
@@ -97,7 +97,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
 
       // Record item history before deletion
       const { data: currentItems } = await supabase
-        .from("items")
+        .from("current_status")
         .select("*")
         .eq("name", item.name)
         .eq("room_number", roomNumber);
@@ -105,7 +105,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       if (currentItems) {
         for (const currentItem of currentItems) {
           await supabase
-            .from("items_history")
+            .from("previous_status")
             .insert({
               item_id: currentItem.id,
               name: currentItem.name,
@@ -118,7 +118,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
 
       // Delete existing item
       const { error: deleteError } = await supabase
-        .from("items")
+        .from("current_status")
         .delete()
         .eq("name", item.name)
         .eq("room_number", roomNumber);
@@ -130,7 +130,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       // Create new items with updated quantities
       if (maintenanceQuantity > 0) {
         await supabase
-          .from("items")
+          .from("current_status")
           .insert({
             name,
             quantity: maintenanceQuantity,
@@ -141,7 +141,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
 
       if (replacementQuantity > 0) {
         await supabase
-          .from("items")
+          .from("current_status")
           .insert({
             name,
             quantity: replacementQuantity,
@@ -153,7 +153,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
       const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
       if (goodQuantity > 0) {
         await supabase
-          .from("items")
+          .from("current_status")
           .insert({
             name,
             quantity: goodQuantity,
