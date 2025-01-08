@@ -76,28 +76,59 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
   };
 
   const formatActionMessage = (log: ActivityLog) => {
-    if (log.action_type === 'status_change' && log.previous_status && log.current_status) {
-      return (
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{log.item_name}</span>
+    const timestamp = format(new Date(log.created_at), 'MMM d, yyyy HH:mm:ss');
+    
+    switch (log.action_type) {
+      case 'edit':
+        if (log.previous_status && log.current_status) {
+          return (
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{log.item_name}</span>
+              <span>has been edited by</span>
+              <span className="font-semibold">{log.username || "Unknown"}</span>
+              <span>from</span>
+              <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(log.previous_status)}`}>
+                {log.previous_status}
+              </span>
+              <ArrowRight className="h-4 w-4 text-gray-400" />
+              <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(log.current_status)}`}>
+                {log.current_status}
+              </span>
+            </div>
+          );
+        }
+        return null;
+      
+      case 'delete':
+        return (
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(log.previous_status)}`}>
-              {log.previous_status}
-            </span>
-            <ArrowRight className="h-4 w-4 text-gray-400" />
-            <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(log.current_status)}`}>
-              {log.current_status}
-            </span>
+            <span className="font-medium">{log.item_name}</span>
+            <span>had been deleted by</span>
+            <span className="font-semibold">{log.username || "Unknown"}</span>
+            <span>at</span>
+            <span className="text-gray-600">{timestamp}</span>
           </div>
-        </div>
-      );
+        );
+      
+      case 'add':
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{log.item_name}</span>
+            <span>had been added by</span>
+            <span className="font-semibold">{log.username || "Unknown"}</span>
+            <span>at</span>
+            <span className="text-gray-600">{timestamp}</span>
+          </div>
+        );
+      
+      default:
+        return (
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{log.item_name}</span>
+            <span className="text-gray-600">{log.details}</span>
+          </div>
+        );
     }
-    return (
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{log.item_name}</span>
-        <span className="text-gray-600">{log.details}</span>
-      </div>
-    );
   };
 
   if (isLoading) {

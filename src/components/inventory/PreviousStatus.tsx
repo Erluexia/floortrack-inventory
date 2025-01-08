@@ -35,11 +35,31 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         throw error;
       }
 
-      return data;
+      // Group items by name to calculate quantities
+      const groupedData = data.reduce((acc: { [key: string]: any }, item) => {
+        if (!acc[item.name]) {
+          acc[item.name] = {
+            ...item,
+            maintenanceCount: item.status === 'maintenance' ? item.quantity : 0,
+            replacementCount: item.status === 'low' ? item.quantity : 0,
+            goodCount: item.status === 'good' ? item.quantity : 0,
+          };
+        } else {
+          if (item.status === 'maintenance') {
+            acc[item.name].maintenanceCount = item.quantity;
+          } else if (item.status === 'low') {
+            acc[item.name].replacementCount = item.quantity;
+          } else {
+            acc[item.name].goodCount = item.quantity;
+          }
+        }
+        return acc;
+      }, {});
+
+      return Object.values(groupedData);
     },
   });
 
-  // Subscribe to real-time changes
   useEffect(() => {
     const channel = supabase
       .channel('schema-db-changes')
@@ -62,26 +82,14 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
     };
   }, [refetch]);
 
-  const getStatusBadgeClass = (status: string) => {
-    switch (status) {
-      case 'good':
-        return 'bg-green-100 text-green-800';
-      case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'low':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
   if (isLoading) {
     return <div>Loading previous status...</div>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Previous Status</h3>
         <Button
           variant="outline"
           size="sm"
@@ -96,28 +104,26 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Timestamp</TableHead>
               <TableHead>Item Name</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Total Quantity</TableHead>
+              <TableHead>Maintenance</TableHead>
+              <TableHead>Replacement</TableHead>
+              <TableHead>Changed At</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history?.map((item: ItemHistory) => (
+            {history?.map((item: any) => (
               <TableRow key={item.id}>
-                <TableCell>{format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss')}</TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(item.status)}`}>
-                    {item.status}
-                  </span>
-                </TableCell>
+                <TableCell>{item.maintenanceCount}</TableCell>
+                <TableCell>{item.replacementCount}</TableCell>
+                <TableCell>{format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss')}</TableCell>
               </TableRow>
             ))}
             {(!history || history.length === 0) && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
                   No previous changes recorded
                 </TableCell>
               </TableRow>
