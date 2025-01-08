@@ -10,9 +10,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Edit2 } from "lucide-react";
+import { ItemFormFields } from "./ItemFormFields";
+import { updateItem } from "@/utils/itemOperations";
 
 interface EditItemDialogProps {
   item: {
@@ -34,7 +34,6 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
   const [replacementCount, setReplacementCount] = useState("0");
   const { toast } = useToast();
 
-  // Initialize status counts when dialog opens
   const initializeStatusCounts = async () => {
     const { data: items } = await supabase
       .from("current_status")
@@ -70,124 +69,25 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
           description: "Maintenance or replacement count cannot be greater than total quantity",
           variant: "destructive",
         });
-        setIsSubmitting(false);
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const success = await updateItem(
+        item,
+        maintenanceQuantity,
+        replacementQuantity,
+        totalQuantity,
+        roomNumber
+      );
+
+      if (success) {
         toast({
-          title: "Error",
-          description: "You must be logged in to edit items",
-          variant: "destructive",
+          title: "Success",
+          description: "Item updated successfully",
         });
-        return;
+        onItemUpdated();
+        setOpen(false);
       }
-
-      // Get user information
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (userError) {
-        console.error("Error fetching user data:", userError);
-      }
-
-      // Record item history before deletion
-      const { data: currentItems } = await supabase
-        .from("current_status")
-        .select("*")
-        .eq("name", item.name)
-        .eq("room_number", roomNumber);
-
-      if (currentItems) {
-        for (const currentItem of currentItems) {
-          await supabase
-            .from("previous_status")
-            .insert({
-              item_id: currentItem.id,
-              name: currentItem.name,
-              quantity: currentItem.quantity,
-              status: currentItem.status,
-              room_number: currentItem.room_number,
-            });
-        }
-      }
-
-      // Delete existing item
-      const { error: deleteError } = await supabase
-        .from("current_status")
-        .delete()
-        .eq("name", item.name)
-        .eq("room_number", roomNumber);
-
-      if (deleteError) {
-        throw new Error("Failed to update item");
-      }
-
-      // Create new items with updated quantities
-      if (maintenanceQuantity > 0) {
-        await supabase
-          .from("current_status")
-          .insert({
-            name,
-            quantity: maintenanceQuantity,
-            status: 'maintenance',
-            room_number: roomNumber,
-          });
-      }
-
-      if (replacementQuantity > 0) {
-        await supabase
-          .from("current_status")
-          .insert({
-            name,
-            quantity: replacementQuantity,
-            status: 'low',
-            room_number: roomNumber,
-          });
-      }
-
-      const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
-      if (goodQuantity > 0) {
-        await supabase
-          .from("current_status")
-          .insert({
-            name,
-            quantity: goodQuantity,
-            status: 'good',
-            room_number: roomNumber,
-          });
-      }
-
-      // Log the edit activity
-      await supabase
-        .from("activity_logs")
-        .insert({
-          room_number: roomNumber,
-          item_name: name,
-          action_type: "edit",
-          details: `Updated quantity to ${totalQuantity} (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
-          user_id: user.id,
-          email: user.email,
-          username: userData?.username,
-        });
-
-      toast({
-        title: "Success",
-        description: "Item updated successfully",
-      });
-      onItemUpdated();
-      setOpen(false);
-    } catch (error) {
-      console.error("Update error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update item",
-        variant: "destructive",
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -213,46 +113,17 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="quantity">Total Quantity</Label>
-            <Input
-              id="quantity"
-              type="number"
-              min="0"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="maintenance">Items Needing Maintenance</Label>
-            <Input
-              id="maintenance"
-              type="number"
-              min="0"
-              value={maintenanceCount}
-              onChange={(e) => setMaintenanceCount(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="replacement">Items Needing Replacement</Label>
-            <Input
-              id="replacement"
-              type="number"
-              min="0"
-              value={replacementCount}
-              onChange={(e) => setReplacementCount(e.target.value)}
-            />
-          </div>
+          <ItemFormFields
+            name={name}
+            quantity={quantity}
+            maintenanceCount={maintenanceCount}
+            replacementCount={replacementCount}
+            setName={setName}
+            setQuantity={setQuantity}
+            setMaintenanceCount={setMaintenanceCount}
+            setReplacementCount={setReplacementCount}
+            isSubmitting={isSubmitting}
+          />
           <div className="flex justify-end">
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Saving..." : "Save Changes"}

@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { ItemFormFields } from "./ItemFormFields";
+import { addItem } from "@/utils/itemOperations";
 
 interface AddItemDialogProps {
   roomNumber: string;
@@ -41,111 +46,26 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const success = await addItem(
+        name,
+        totalQuantity,
+        maintenanceQuantity,
+        replacementQuantity,
+        roomNumber
+      );
 
-      // Create separate items for different statuses
-      if (maintenanceQuantity > 0) {
-        const { error: maintenanceError } = await supabase
-          .from("current_status")
-          .insert({
-            name,
-            quantity: maintenanceQuantity,
-            status: 'maintenance',
-            room_number: roomNumber,
-          });
-
-        if (maintenanceError) {
-          toast({
-            title: "Error",
-            description: "Failed to add maintenance items",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      if (replacementQuantity > 0) {
-        const { error: replacementError } = await supabase
-          .from("current_status")
-          .insert({
-            name,
-            quantity: replacementQuantity,
-            status: 'low',
-            room_number: roomNumber,
-          });
-
-        if (replacementError) {
-          toast({
-            title: "Error",
-            description: "Failed to add replacement items",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Add remaining items as 'good' status
-      const goodQuantity = totalQuantity - maintenanceQuantity - replacementQuantity;
-      if (goodQuantity > 0) {
-        const { error: goodError } = await supabase
-          .from("current_status")
-          .insert({
-            name,
-            quantity: goodQuantity,
-            status: 'good',
-            room_number: roomNumber,
-          });
-
-        if (goodError) {
-          toast({
-            title: "Error",
-            description: "Failed to add good items",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Get user information for activity log
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user?.id)
-        .single();
-
-      // Log the activity
-      const { error: logError } = await supabase
-        .from("activity_logs")
-        .insert({
-          room_number: roomNumber,
-          item_name: name,
-          action_type: "add",
-          details: `Added ${totalQuantity} items (Maintenance: ${maintenanceQuantity}, Replacement: ${replacementQuantity})`,
-          user_id: user?.id,
-          email: user?.email,
-          username: userData?.username,
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Item added successfully",
         });
-
-      if (logError) {
-        console.error("Failed to log activity:", logError);
+        setIsOpen(false);
+        setName("");
+        setQuantity("");
+        setMaintenanceCount("");
+        setReplacementCount("");
+        onItemAdded();
       }
-
-      toast({
-        title: "Success",
-        description: "Items added successfully",
-      });
-      setIsOpen(false);
-      setName("");
-      setQuantity("");
-      setMaintenanceCount("");
-      setReplacementCount("");
-      onItemAdded();
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -168,46 +88,17 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
           <DialogTitle>Add New Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Item Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="quantity">Total Quantity</Label>
-            <Input
-              id="quantity"
-              type="number"
-              min="0"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="maintenance">Items Needing Maintenance</Label>
-            <Input
-              id="maintenance"
-              type="number"
-              min="0"
-              value={maintenanceCount}
-              onChange={(e) => setMaintenanceCount(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="replacement">Items Needing Replacement</Label>
-            <Input
-              id="replacement"
-              type="number"
-              min="0"
-              value={replacementCount}
-              onChange={(e) => setReplacementCount(e.target.value)}
-            />
-          </div>
+          <ItemFormFields
+            name={name}
+            quantity={quantity}
+            maintenanceCount={maintenanceCount}
+            replacementCount={replacementCount}
+            setName={setName}
+            setQuantity={setQuantity}
+            setMaintenanceCount={setMaintenanceCount}
+            setReplacementCount={setReplacementCount}
+            isSubmitting={isSubmitting}
+          />
           <Button 
             type="submit" 
             className="w-full" 
