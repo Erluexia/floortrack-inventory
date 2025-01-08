@@ -72,8 +72,13 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
         return;
       }
 
+      const itemWithRoom = {
+        ...item,
+        room_number: roomNumber
+      };
+
       const success = await updateItem(
-        item,
+        itemWithRoom,
         maintenanceQuantity,
         replacementQuantity,
         totalQuantity,
