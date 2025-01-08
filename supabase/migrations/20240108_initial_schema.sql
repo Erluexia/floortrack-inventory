@@ -1,8 +1,8 @@
 -- Create enum for item status
 CREATE TYPE item_status AS ENUM ('good', 'maintenance', 'low');
 
--- Create items table
-CREATE TABLE IF NOT EXISTS public.items (
+-- Create current_status table (formerly items)
+CREATE TABLE IF NOT EXISTS public.current_status (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     quantity INTEGER NOT NULL DEFAULT 0,
@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS public.items (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create items_history table
-CREATE TABLE IF NOT EXISTS public.items_history (
+-- Create previous_status table (formerly items_history)
+CREATE TABLE IF NOT EXISTS public.previous_status (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    item_id UUID REFERENCES public.items(id),
+    item_id UUID REFERENCES public.current_status(id),
     name TEXT NOT NULL,
     quantity INTEGER NOT NULL,
     status item_status NOT NULL,
@@ -57,34 +57,34 @@ BEGIN
         SUM(CASE WHEN i.status = 'good' THEN i.quantity ELSE 0 END)::TEXT as good_count,
         SUM(CASE WHEN i.status = 'maintenance' THEN i.quantity ELSE 0 END)::TEXT as maintenance_count,
         SUM(CASE WHEN i.status = 'low' THEN i.quantity ELSE 0 END)::TEXT as replacement_count
-    FROM items i
+    FROM current_status i
     GROUP BY i.room_number;
 END;
 $$;
 
 -- Create RLS policies
-ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.items_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.current_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.previous_status ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_logs ENABLE ROW LEVEL SECURITY;
 
--- Create policies for items table
-CREATE POLICY "Enable read access for authenticated users" ON public.items
+-- Create policies for current_status table
+CREATE POLICY "Enable read access for authenticated users" ON public.current_status
     FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Enable insert access for authenticated users" ON public.items
+CREATE POLICY "Enable insert access for authenticated users" ON public.current_status
     FOR INSERT TO authenticated WITH CHECK (true);
 
-CREATE POLICY "Enable update access for authenticated users" ON public.items
+CREATE POLICY "Enable update access for authenticated users" ON public.current_status
     FOR UPDATE TO authenticated USING (true);
 
-CREATE POLICY "Enable delete access for authenticated users" ON public.items
+CREATE POLICY "Enable delete access for authenticated users" ON public.current_status
     FOR DELETE TO authenticated USING (true);
 
--- Create policies for items_history table
-CREATE POLICY "Enable read access for authenticated users" ON public.items_history
+-- Create policies for previous_status table
+CREATE POLICY "Enable read access for authenticated users" ON public.previous_status
     FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Enable insert access for authenticated users" ON public.items_history
+CREATE POLICY "Enable insert access for authenticated users" ON public.previous_status
     FOR INSERT TO authenticated WITH CHECK (true);
 
 -- Create policies for activity_logs table
@@ -95,6 +95,6 @@ CREATE POLICY "Enable insert access for authenticated users" ON public.activity_
     FOR INSERT TO authenticated WITH CHECK (true);
 
 -- Create indexes for better performance
-CREATE INDEX items_room_number_idx ON public.items(room_number);
-CREATE INDEX items_history_room_number_idx ON public.items_history(room_number);
+CREATE INDEX current_status_room_number_idx ON public.current_status(room_number);
+CREATE INDEX previous_status_room_number_idx ON public.previous_status(room_number);
 CREATE INDEX activity_logs_room_number_idx ON public.activity_logs(room_number);

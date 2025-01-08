@@ -22,16 +22,16 @@ interface ItemHistory {
 
 export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
   const { data: history, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ["items-history", roomNumber],
+    queryKey: ["previous-status", roomNumber],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("items_history")
+        .from("previous_status")
         .select("*")
         .eq("room_number", roomNumber)
         .order("changed_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching items history:", error);
+        console.error("Error fetching previous status:", error);
         throw error;
       }
 
@@ -48,10 +48,10 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
         {
           event: '*',
           schema: 'public',
-          table: 'items_history'
+          table: 'previous_status'
         },
         () => {
-          console.log('Items history changed, refreshing data');
+          console.log('Previous status changed, refreshing data');
           refetch();
         }
       )
