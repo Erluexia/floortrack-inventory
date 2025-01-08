@@ -36,7 +36,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const { toast } = useToast();
 
-  const { data: items, refetch, isRefetching } = useQuery({
+  const { data: items = [], refetch, isRefetching } = useQuery({
     queryKey: ["items", roomNumber],
     queryFn: async () => {
       console.log("Fetching items for room:", roomNumber);
@@ -48,6 +48,11 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
       if (error) {
         handleSupabaseError(error, "Error fetching items");
+        return [];
+      }
+
+      if (!Array.isArray(data)) {
+        console.error("Data is not an array:", data);
         return [];
       }
 
@@ -75,8 +80,9 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
         return acc;
       }, {});
 
-      // Convert the object back to an array
-      return Object.values(itemsMap);
+      const result = Object.values(itemsMap);
+      console.log("Processed items:", result);
+      return result;
     },
   });
 
@@ -218,7 +224,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items && items.length > 0 ? (
+            {Array.isArray(items) && items.length > 0 ? (
               items.map((item: InventoryItem) => (
                 <TableRow key={item.id}>
                   <TableCell>
