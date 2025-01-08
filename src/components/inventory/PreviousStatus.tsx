@@ -62,6 +62,19 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
     };
   }, [refetch]);
 
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'good':
+        return 'bg-green-100 text-green-800';
+      case 'maintenance':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   if (isLoading) {
     return <div>Loading previous status...</div>;
   }
@@ -95,7 +108,11 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
                 <TableCell>{format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss')}</TableCell>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
-                <TableCell>{item.status}</TableCell>
+                <TableCell>
+                  <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(item.status)}`}>
+                    {item.status}
+                  </span>
+                </TableCell>
               </TableRow>
             ))}
             {(!history || history.length === 0) && (

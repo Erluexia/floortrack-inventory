@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronRight, User, RefreshCw } from "lucide-react";
+import { ChevronRight, User, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
@@ -78,26 +78,24 @@ export const ActivityLog = ({ roomNumber }: ActivityLogProps) => {
   const formatActionMessage = (log: ActivityLog) => {
     if (log.action_type === 'status_change' && log.previous_status && log.current_status) {
       return (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm">
-            <span className="font-medium">{log.username || "Unknown user"}</span>
-            {" has changed "}
-            <span className="font-medium">{log.item_name}</span>
-            {" from "}
-            <span className={`px-2 py-1 rounded ${getStatusBadgeClass(log.previous_status)}`}>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{log.item_name}</span>
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(log.previous_status)}`}>
               {log.previous_status}
             </span>
-            {" to "}
-            <span className={`px-2 py-1 rounded ${getStatusBadgeClass(log.current_status)}`}>
+            <ArrowRight className="h-4 w-4 text-gray-400" />
+            <span className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(log.current_status)}`}>
               {log.current_status}
             </span>
-          </p>
+          </div>
         </div>
       );
     }
     return (
-      <div className="flex flex-col gap-1">
-        <span>{log.details}</span>
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{log.item_name}</span>
+        <span className="text-gray-600">{log.details}</span>
       </div>
     );
   };
