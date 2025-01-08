@@ -1,27 +1,49 @@
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
 
 export const DashboardStats = () => {
   const { data: stats } = useQuery({
     queryKey: ['itemStats'],
     queryFn: async () => {
-      const { data: items, error } = await supabase
-        .from('current_status')
-        .select('status, quantity');
+      try {
+        const { data: items, error } = await supabase
+          .from('current_status')
+          .select('status, quantity');
 
-      if (error) throw error;
+        if (error) {
+          console.error('Error fetching stats:', error);
+          toast({
+            title: "Error",
+            description: "Failed to fetch item statistics",
+            variant: "destructive",
+          });
+          return { total: 0, maintenance: 0, replacement: 0 };
+        }
 
-      const total = items.reduce((sum, item) => sum + item.quantity, 0);
-      const maintenance = items
-        .filter(item => item.status === 'maintenance')
-        .reduce((sum, item) => sum + item.quantity, 0);
-      const replacement = items
-        .filter(item => item.status === 'low')
-        .reduce((sum, item) => sum + item.quantity, 0);
+        if (!items) return { total: 0, maintenance: 0, replacement: 0 };
 
-      return { total, maintenance, replacement };
-    }
+        const total = items.reduce((sum, item) => sum + item.quantity, 0);
+        const maintenance = items
+          .filter(item => item.status === 'maintenance')
+          .reduce((sum, item) => sum + item.quantity, 0);
+        const replacement = items
+          .filter(item => item.status === 'low')
+          .reduce((sum, item) => sum + item.quantity, 0);
+
+        return { total, maintenance, replacement };
+      } catch (error) {
+        console.error('Error in stats calculation:', error);
+        toast({
+          title: "Error",
+          description: "Failed to calculate statistics",
+          variant: "destructive",
+        });
+        return { total: 0, maintenance: 0, replacement: 0 };
+      }
+    },
+    retry: 1,
   });
 
   return (

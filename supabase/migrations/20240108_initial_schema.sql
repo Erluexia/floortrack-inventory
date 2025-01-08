@@ -1,7 +1,7 @@
 -- Create enum for item status
 CREATE TYPE item_status AS ENUM ('good', 'maintenance', 'low');
 
--- Create current_status table (formerly items)
+-- Create current_status table
 CREATE TABLE IF NOT EXISTS public.current_status (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS public.current_status (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create previous_status table (formerly items_history)
+-- Create previous_status table
 CREATE TABLE IF NOT EXISTS public.previous_status (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     item_id UUID REFERENCES public.current_status(id),
@@ -38,7 +38,10 @@ CREATE TABLE IF NOT EXISTS public.activity_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Create function to count items by room
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS count_items_by_room();
+
+-- Create updated function to count items by room
 CREATE OR REPLACE FUNCTION count_items_by_room()
 RETURNS TABLE (
     room_number TEXT,
@@ -52,13 +55,13 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT 
-        i.room_number,
-        SUM(i.quantity)::TEXT as total_count,
-        SUM(CASE WHEN i.status = 'good' THEN i.quantity ELSE 0 END)::TEXT as good_count,
-        SUM(CASE WHEN i.status = 'maintenance' THEN i.quantity ELSE 0 END)::TEXT as maintenance_count,
-        SUM(CASE WHEN i.status = 'low' THEN i.quantity ELSE 0 END)::TEXT as replacement_count
-    FROM current_status i
-    GROUP BY i.room_number;
+        cs.room_number,
+        SUM(cs.quantity)::TEXT as total_count,
+        SUM(CASE WHEN cs.status = 'good' THEN cs.quantity ELSE 0 END)::TEXT as good_count,
+        SUM(CASE WHEN cs.status = 'maintenance' THEN cs.quantity ELSE 0 END)::TEXT as maintenance_count,
+        SUM(CASE WHEN cs.status = 'low' THEN cs.quantity ELSE 0 END)::TEXT as replacement_count
+    FROM current_status cs
+    GROUP BY cs.room_number;
 END;
 $$;
 
