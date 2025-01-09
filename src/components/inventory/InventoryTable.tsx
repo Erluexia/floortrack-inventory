@@ -17,15 +17,18 @@ import { AddItemDialog } from "./AddItemDialog";
 import { EditItemDialog } from "./EditItemDialog";
 import { fetchItemStatus, subscribeToItemChanges } from "@/utils/db/itemQueries";
 import { deleteItem } from "@/utils/db/itemOperations";
+import { supabase } from "@/integrations/supabase/client";
 
 interface InventoryItem {
   id: string;
   name: string;
   quantity: number;
-  status: "good" | "maintenance" | "low";
+  status: string;
   room_number: string;
   maintenance_count: number;
   replacement_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {

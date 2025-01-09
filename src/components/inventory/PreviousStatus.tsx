@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useEffect } from "react";
 import { fetchPreviousStatus, subscribeToItemChanges } from "@/utils/db/itemQueries";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PreviousStatusProps {
   roomNumber: string;
