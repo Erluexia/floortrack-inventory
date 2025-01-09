@@ -63,8 +63,10 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          maintenance_count: number
           name: string
           quantity: number
+          replacement_count: number
           room_number: string
           status: string
           updated_at: string
@@ -72,8 +74,10 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          maintenance_count?: number
           name: string
           quantity?: number
+          replacement_count?: number
           room_number: string
           status?: string
           updated_at?: string
@@ -81,8 +85,10 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          maintenance_count?: number
           name?: string
           quantity?: number
+          replacement_count?: number
           room_number?: string
           status?: string
           updated_at?: string

@@ -12,11 +12,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { AddItemDialog } from "./AddItemDialog";
 import { EditItemDialog } from "./EditItemDialog";
-import { fetchItems, deleteItem } from "@/utils/itemOperations";
+import { fetchItemStatus, subscribeToItemChanges } from "@/utils/db/itemQueries";
+import { deleteItem } from "@/utils/db/itemOperations";
 
 interface InventoryItem {
   id: string;
@@ -24,9 +24,8 @@ interface InventoryItem {
   quantity: number;
   status: "good" | "maintenance" | "low";
   room_number: string;
-  maintenanceCount?: number;
-  replacementCount?: number;
-  goodCount?: number;
+  maintenance_count: number;
+  replacement_count: number;
 }
 
 export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
@@ -34,27 +33,11 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
 
   const { data: items = [], refetch, isRefetching } = useQuery({
     queryKey: ["items", roomNumber],
-    queryFn: () => fetchItems(roomNumber),
+    queryFn: () => fetchItemStatus(roomNumber),
   });
 
   useEffect(() => {
-    const channel = supabase
-      .channel('items-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'current_status',
-          filter: `room_number=eq.${roomNumber}`,
-        },
-        () => {
-          console.log('Items changed, refreshing data');
-          refetch();
-        }
-      )
-      .subscribe();
-
+    const channel = subscribeToItemChanges(roomNumber, refetch);
     return () => {
       supabase.removeChannel(channel);
     };
@@ -97,15 +80,15 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {Array.isArray(items) && items.length > 0 ? (
+            {items.length > 0 ? (
               items.map((item: InventoryItem) => (
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="font-medium">{item.name}</div>
                   </TableCell>
                   <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{item.maintenanceCount || 0}</TableCell>
-                  <TableCell>{item.replacementCount || 0}</TableCell>
+                  <TableCell>{item.maintenance_count}</TableCell>
+                  <TableCell>{item.replacement_count}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       <EditItemDialog item={item} roomNumber={roomNumber} onItemUpdated={refetch} />
