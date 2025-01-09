@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Edit2 } from "lucide-react";
 import { ItemFormFields } from "./ItemFormFields";
 import { updateItem } from "@/utils/itemOperations";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 interface EditItemDialogProps {
   item: {
@@ -52,7 +53,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useDebouncedCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
@@ -96,7 +97,7 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, 1000);
 
   return (
     <Dialog open={open} onOpenChange={(newOpen) => {

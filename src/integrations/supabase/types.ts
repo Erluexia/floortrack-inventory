@@ -68,7 +68,7 @@ export type Database = {
           quantity: number
           replacement_count: number
           room_number: string
-          status: string
+          status: Database["public"]["Enums"]["item_status"] | null
           updated_at: string
         }
         Insert: {
@@ -79,7 +79,7 @@ export type Database = {
           quantity?: number
           replacement_count?: number
           room_number: string
-          status?: string
+          status?: Database["public"]["Enums"]["item_status"] | null
           updated_at?: string
         }
         Update: {
@@ -90,7 +90,7 @@ export type Database = {
           quantity?: number
           replacement_count?: number
           room_number?: string
-          status?: string
+          status?: Database["public"]["Enums"]["item_status"] | null
           updated_at?: string
         }
         Relationships: []
@@ -103,7 +103,7 @@ export type Database = {
           name: string
           quantity: number
           room_number: string
-          status: string
+          status: Database["public"]["Enums"]["item_status"] | null
         }
         Insert: {
           changed_at?: string | null
@@ -112,7 +112,7 @@ export type Database = {
           name: string
           quantity: number
           room_number: string
-          status: string
+          status?: Database["public"]["Enums"]["item_status"] | null
         }
         Update: {
           changed_at?: string | null
@@ -121,7 +121,7 @@ export type Database = {
           name?: string
           quantity?: number
           room_number?: string
-          status?: string
+          status?: Database["public"]["Enums"]["item_status"] | null
         }
         Relationships: [
           {
@@ -171,7 +171,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      item_status: "good" | "maintenance" | "low"
     }
     CompositeTypes: {
       [_ in never]: never

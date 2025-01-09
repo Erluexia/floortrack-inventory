@@ -18,6 +18,7 @@ import { EditItemDialog } from "./EditItemDialog";
 import { fetchItemStatus, subscribeToItemChanges } from "@/utils/db/itemQueries";
 import { deleteItem } from "@/utils/db/itemOperations";
 import { supabase } from "@/integrations/supabase/client";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 export interface InventoryItem {
   id: string;
@@ -33,6 +34,7 @@ export interface InventoryItem {
 
 export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: items = [], refetch, isRefetching } = useQuery({
     queryKey: ["items", roomNumber],
@@ -52,15 +54,20 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
     };
   }, [roomNumber, refetch]);
 
-  const handleDelete = async () => {
-    if (!itemToDelete) return;
+  const handleDelete = useDebouncedCallback(async () => {
+    if (!itemToDelete || isDeleting) return;
 
-    const success = await deleteItem(itemToDelete);
-    if (success) {
-      refetch();
-      setItemToDelete(null);
+    setIsDeleting(true);
+    try {
+      const success = await deleteItem(itemToDelete);
+      if (success) {
+        refetch();
+        setItemToDelete(null);
+      }
+    } finally {
+      setIsDeleting(false);
     }
-  };
+  }, 1000);
 
   return (
     <div className="space-y-4 font-arial">
@@ -105,6 +112,7 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
                         variant="ghost"
                         size="icon"
                         onClick={() => setItemToDelete(item)}
+                        disabled={isDeleting}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -134,7 +142,12 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

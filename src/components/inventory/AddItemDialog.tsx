@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { ItemFormFields } from "./ItemFormFields";
 import { addItem } from "@/utils/itemOperations";
+import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 interface AddItemDialogProps {
   roomNumber: string;
@@ -26,7 +27,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
   const [replacementCount, setReplacementCount] = useState("");
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useDebouncedCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
@@ -69,7 +70,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, 1000);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
