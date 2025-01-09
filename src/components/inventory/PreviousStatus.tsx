@@ -11,6 +11,16 @@ interface PreviousStatusProps {
   roomNumber: string;
 }
 
+interface PreviousStatusItem {
+  id: string;
+  item_id: string | null;
+  name: string;
+  quantity: number;
+  status: string;
+  room_number: string;
+  changed_at: string | null;
+}
+
 export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
   const { data: history, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ["previous-status", roomNumber],
@@ -53,12 +63,12 @@ export const PreviousStatus = ({ roomNumber }: PreviousStatusProps) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history?.map((item) => (
+            {history?.map((item: PreviousStatusItem) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.quantity}</TableCell>
                 <TableCell>{item.status}</TableCell>
-                <TableCell>{format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss')}</TableCell>
+                <TableCell>{item.changed_at ? format(new Date(item.changed_at), 'MMM d, yyyy HH:mm:ss') : 'N/A'}</TableCell>
               </TableRow>
             ))}
             {(!history || history.length === 0) && (

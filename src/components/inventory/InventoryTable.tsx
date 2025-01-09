@@ -19,11 +19,11 @@ import { fetchItemStatus, subscribeToItemChanges } from "@/utils/db/itemQueries"
 import { deleteItem } from "@/utils/db/itemOperations";
 import { supabase } from "@/integrations/supabase/client";
 
-interface InventoryItem {
+export interface InventoryItem {
   id: string;
   name: string;
   quantity: number;
-  status: string;
+  status: "good" | "maintenance" | "low";
   room_number: string;
   maintenance_count: number;
   replacement_count: number;
@@ -37,6 +37,12 @@ export const InventoryTable = ({ roomNumber }: { roomNumber: string }) => {
   const { data: items = [], refetch, isRefetching } = useQuery({
     queryKey: ["items", roomNumber],
     queryFn: () => fetchItemStatus(roomNumber),
+    select: (data): InventoryItem[] => {
+      return data.map(item => ({
+        ...item,
+        status: item.status as "good" | "maintenance" | "low"
+      }));
+    }
   });
 
   useEffect(() => {
