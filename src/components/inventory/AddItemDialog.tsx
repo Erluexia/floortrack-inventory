@@ -27,6 +27,13 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
   const [replacementCount, setReplacementCount] = useState("");
   const { toast } = useToast();
 
+  const resetForm = () => {
+    setName("");
+    setQuantity("");
+    setMaintenanceCount("");
+    setReplacementCount("");
+  };
+
   const handleSubmit = useDebouncedCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -60,20 +67,31 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
           title: "Success",
           description: "Item added successfully",
         });
-        setIsOpen(false);
-        setName("");
-        setQuantity("");
-        setMaintenanceCount("");
-        setReplacementCount("");
+        resetForm();
         onItemAdded();
+        setIsOpen(false);
       }
+    } catch (error) {
+      console.error("Error adding item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add item",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
   }, 1000);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(newOpen) => {
+      if (!isSubmitting) {
+        setIsOpen(newOpen);
+        if (!newOpen) {
+          resetForm();
+        }
+      }
+    }}>
       <DialogTrigger asChild>
         <Button 
           className="ml-auto bg-primary hover:bg-primary/90 text-white font-arial" 
