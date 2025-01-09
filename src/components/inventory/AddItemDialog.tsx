@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { ItemFormFields } from "./ItemFormFields";
-import { addItem } from "@/utils/itemOperations";
+import { addItem } from "@/utils/db/itemOperations";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 interface AddItemDialogProps {
@@ -32,30 +32,51 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
     setQuantity("");
     setMaintenanceCount("");
     setReplacementCount("");
+    setIsSubmitting(false);
   };
 
   const handleSubmit = useDebouncedCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (isSubmitting) return;
+
+    const totalQuantity = parseInt(quantity);
+    const maintenanceQuantity = parseInt(maintenanceCount) || 0;
+    const replacementQuantity = parseInt(replacementCount) || 0;
+
+    // Validate inputs
+    if (!name.trim()) {
+      toast({
+        title: "Error",
+        description: "Item name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isNaN(totalQuantity) || totalQuantity <= 0) {
+      toast({
+        title: "Error",
+        description: "Total quantity must be a positive number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (maintenanceQuantity + replacementQuantity > totalQuantity) {
+      toast({
+        title: "Error",
+        description: "Maintenance and replacement counts cannot exceed total quantity",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      const totalQuantity = parseInt(quantity);
-      const maintenanceQuantity = parseInt(maintenanceCount) || 0;
-      const replacementQuantity = parseInt(replacementCount) || 0;
-
-      if (maintenanceQuantity > totalQuantity || replacementQuantity > totalQuantity) {
-        toast({
-          title: "Error",
-          description: "Maintenance or replacement count cannot be greater than total quantity",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const success = await addItem(
-        name,
+        name.trim(),
         totalQuantity,
         maintenanceQuantity,
         replacementQuantity,
@@ -67,36 +88,37 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
           title: "Success",
           description: "Item added successfully",
         });
-        resetForm();
         onItemAdded();
         setIsOpen(false);
+        resetForm();
       }
     } catch (error) {
       console.error("Error adding item:", error);
       toast({
         title: "Error",
-        description: "Failed to add item",
+        description: error instanceof Error ? error.message : "Failed to add item",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
-  }, 1000);
+  }, 500);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!isSubmitting) {
+      if (!open) {
+        resetForm();
+      }
+      setIsOpen(open);
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(newOpen) => {
-      if (!isSubmitting) {
-        setIsOpen(newOpen);
-        if (!newOpen) {
-          resetForm();
-        }
-      }
-    }}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button 
           className="ml-auto bg-primary hover:bg-primary/90 text-white font-arial" 
           size="sm"
-          disabled={isSubmitting}
         >
           <PlusCircle className="h-4 w-4 mr-2" />
           Add Item
