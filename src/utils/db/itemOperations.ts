@@ -99,6 +99,25 @@ export const addItem = async (
   roomNumber: string
 ) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add items",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    console.log('Adding item with data:', {
+      name,
+      quantity: totalQuantity,
+      maintenance_count: maintenanceCount,
+      replacement_count: replacementCount,
+      room_number: roomNumber,
+      status: maintenanceCount > 0 ? 'maintenance' : replacementCount > 0 ? 'low' : 'good'
+    });
+
     const { error } = await supabase
       .from("current_status")
       .insert({
