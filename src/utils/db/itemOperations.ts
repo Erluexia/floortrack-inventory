@@ -99,6 +99,14 @@ export const addItem = async (
   roomNumber: string
 ) => {
   try {
+    console.log('Starting addItem function with:', {
+      name,
+      totalQuantity,
+      maintenanceCount,
+      replacementCount,
+      roomNumber
+    });
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast({
@@ -109,36 +117,30 @@ export const addItem = async (
       return false;
     }
 
-    console.log('Adding item with data:', {
-      name,
-      quantity: totalQuantity,
-      maintenance_count: maintenanceCount,
-      replacement_count: replacementCount,
-      room_number: roomNumber,
-      status: maintenanceCount > 0 ? 'maintenance' : replacementCount > 0 ? 'low' : 'good'
-    });
-
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("current_status")
       .insert({
         name,
         quantity: totalQuantity,
         maintenance_count: maintenanceCount,
         replacement_count: replacementCount,
-        status: maintenanceCount > 0 ? 'maintenance' : replacementCount > 0 ? 'low' : 'good',
-        room_number: roomNumber
-      });
+        room_number: roomNumber,
+        status: maintenanceCount > 0 ? 'maintenance' : replacementCount > 0 ? 'low' : 'good'
+      })
+      .select('*')
+      .single();
 
     if (error) {
       console.error("Error adding item:", error);
       toast({
         title: "Error",
-        description: "Failed to add item",
+        description: error.message || "Failed to add item",
         variant: "destructive",
       });
       return false;
     }
 
+    console.log('Successfully added item:', data);
     return true;
   } catch (error) {
     console.error("Error in addItem:", error);
