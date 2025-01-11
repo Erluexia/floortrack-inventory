@@ -109,7 +109,8 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
         description: "Item added successfully",
       });
       
-      onItemAdded();
+      // Ensure we trigger the refresh of the table
+      await onItemAdded();
       setIsOpen(false);
       resetForm();
     } catch (error) {
