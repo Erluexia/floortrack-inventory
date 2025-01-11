@@ -159,6 +159,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_check: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       count_items_by_room: {
         Args: Record<PropertyKey, never>
         Returns: {
