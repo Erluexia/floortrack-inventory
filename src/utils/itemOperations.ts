@@ -167,59 +167,82 @@ export const addItem = async (
   replacementCount: number,
   roomNumber: string
 ) => {
-  const insertPromises = [];
-
-  if (maintenanceCount > 0) {
-    insertPromises.push(
-      supabase
-        .from("current_status")
-        .insert({
-          name,
-          quantity: maintenanceCount,
-          status: 'maintenance',
-          room_number: roomNumber,
-        })
-    );
-  }
-
-  if (replacementCount > 0) {
-    insertPromises.push(
-      supabase
-        .from("current_status")
-        .insert({
-          name,
-          quantity: replacementCount,
-          status: 'low',
-          room_number: roomNumber,
-        })
-    );
-  }
-
-  const goodQuantity = totalQuantity - maintenanceCount - replacementCount;
-  if (goodQuantity > 0) {
-    insertPromises.push(
-      supabase
-        .from("current_status")
-        .insert({
-          name,
-          quantity: goodQuantity,
-          status: 'good',
-          room_number: roomNumber,
-        })
-    );
-  }
-
-  const results = await Promise.all(insertPromises);
-  const hasError = results.some(result => result.error);
-
-  if (hasError) {
+  console.log('Adding item:', { name, totalQuantity, maintenanceCount, replacementCount, roomNumber });
+  
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
     toast({
       title: "Error",
-      description: "Failed to add item",
+      description: "You must be logged in to add items",
       variant: "destructive",
     });
     return false;
   }
 
-  return true;
+  // Start a Supabase transaction
+  const items = [];
+
+  if (maintenanceCount > 0) {
+    items.push({
+      name,
+      quantity: maintenanceCount,
+      status: 'maintenance',
+      room_number: roomNumber,
+      maintenance_count: maintenanceCount,
+      replacement_count: 0
+    });
+  }
+
+  if (replacementCount > 0) {
+    items.push({
+      name,
+      quantity: replacementCount,
+      status: 'low',
+      room_number: roomNumber,
+      maintenance_count: 0,
+      replacement_count: replacementCount
+    });
+  }
+
+  const goodQuantity = totalQuantity - maintenanceCount - replacementCount;
+  if (goodQuantity > 0) {
+    items.push({
+      name,
+      quantity: goodQuantity,
+      status: 'good',
+      room_number: roomNumber,
+      maintenance_count: 0,
+      replacement_count: 0
+    });
+  }
+
+  console.log('Inserting items:', items);
+
+  try {
+    const { data, error } = await supabase
+      .from('current_status')
+      .insert(items)
+      .select();
+
+    if (error) {
+      console.error('Error adding items:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to add item",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    console.log('Successfully added items:', data);
+    return true;
+  } catch (error) {
+    console.error('Exception while adding items:', error);
+    toast({
+      title: "Error",
+      description: error instanceof Error ? error.message : "Failed to add item",
+      variant: "destructive",
+    });
+    return false;
+  }
 };
