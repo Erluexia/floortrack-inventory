@@ -59,7 +59,7 @@ export type Database = {
           },
         ]
       }
-      current_status: {
+      currentitem: {
         Row: {
           created_at: string
           id: string
@@ -95,7 +95,7 @@ export type Database = {
         }
         Relationships: []
       }
-      previous_status: {
+      itemhistory: {
         Row: {
           changed_at: string | null
           id: string
@@ -128,7 +128,7 @@ export type Database = {
             foreignKeyName: "items_history_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
-            referencedRelation: "current_status"
+            referencedRelation: "currentitem"
             referencedColumns: ["id"]
           },
         ]
