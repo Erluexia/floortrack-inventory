@@ -29,7 +29,7 @@ export const updateItem = async (
     }
 
     const { error: updateError } = await supabase
-      .from("current_status")
+      .from("currentitem")
       .update({
         quantity: totalQuantity,
         maintenance_count: maintenanceCount,
@@ -64,7 +64,7 @@ export const updateItem = async (
 export const deleteItem = async (item: ItemData) => {
   try {
     const { error } = await supabase
-      .from("current_status")
+      .from("currentitem")
       .delete()
       .eq("name", item.name)
       .eq("room_number", item.room_number);
@@ -118,7 +118,7 @@ export const addItem = async (
     }
 
     const { data, error } = await supabase
-      .from("current_status")
+      .from("currentitem")
       .insert({
         name,
         quantity: totalQuantity,

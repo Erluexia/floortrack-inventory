@@ -10,7 +10,7 @@ export interface ItemStatusCounts {
 
 export const fetchItemStatus = async (roomNumber: string) => {
   const { data, error } = await supabase
-    .from("current_status")
+    .from("currentitem")
     .select("*")
     .eq("room_number", roomNumber);
 
@@ -29,7 +29,7 @@ export const fetchItemStatus = async (roomNumber: string) => {
 
 export const fetchPreviousStatus = async (roomNumber: string) => {
   const { data, error } = await supabase
-    .from("previous_status")
+    .from("itemhistory")
     .select(`
       id,
       item_id,
@@ -63,7 +63,7 @@ export const subscribeToItemChanges = (roomNumber: string, onUpdate: () => void)
       {
         event: '*',
         schema: 'public',
-        table: 'current_status',
+        table: 'currentitem',
         filter: `room_number=eq.${roomNumber}`,
       },
       () => {

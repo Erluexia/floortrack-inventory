@@ -9,7 +9,7 @@ export const DashboardStats = () => {
     queryFn: async () => {
       try {
         const { data: items, error } = await supabase
-          .from('current_status')
+          .from('currentitem')
           .select('status, quantity');
 
         if (error) {
