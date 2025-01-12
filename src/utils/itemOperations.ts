@@ -43,13 +43,7 @@ export const fetchItems = async (roomNumber: string) => {
   return Object.values(itemsMap);
 };
 
-export const updateItem = async (
-  item: ItemData,
-  maintenanceCount: number,
-  replacementCount: number,
-  totalQuantity: number,
-  roomNumber: string
-) => {
+export const updateItem = async (item: ItemData) => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -64,13 +58,13 @@ export const updateItem = async (
     const { error: updateError } = await supabase
       .from("currentitem")
       .update({
-        quantity: totalQuantity,
-        maintenance_count: maintenanceCount,
-        replacement_count: replacementCount,
-        status: maintenanceCount > 0 ? 'maintenance' : replacementCount > 0 ? 'low' : 'good'
+        quantity: item.quantity,
+        maintenance_count: item.maintenance_count,
+        replacement_count: item.replacement_count,
+        status: item.maintenance_count > 0 ? 'maintenance' : item.replacement_count > 0 ? 'low' : 'good'
       })
       .eq("name", item.name)
-      .eq("room_number", roomNumber);
+      .eq("room_number", item.room_number);
 
     if (updateError) {
       console.error("Error updating item:", updateError);

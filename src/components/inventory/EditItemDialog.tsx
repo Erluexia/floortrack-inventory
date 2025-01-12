@@ -71,16 +71,13 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
 
       const itemWithRoom = {
         ...item,
-        room_number: roomNumber
+        room_number: roomNumber,
+        maintenance_count: maintenanceQuantity,
+        replacement_count: replacementQuantity,
+        quantity: totalQuantity
       };
 
-      const success = await updateItem(
-        itemWithRoom,
-        maintenanceQuantity,
-        replacementQuantity,
-        totalQuantity,
-        roomNumber
-      );
+      const success = await updateItem(itemWithRoom);
 
       if (success) {
         toast({
