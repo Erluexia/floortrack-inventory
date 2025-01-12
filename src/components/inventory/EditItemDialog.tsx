@@ -37,19 +37,15 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
 
   const initializeStatusCounts = async () => {
     const { data: items } = await supabase
-      .from("current_status")
+      .from("currentitem")
       .select("*")
       .eq("name", item.name)
       .eq("room_number", roomNumber);
 
-    if (items) {
-      const maintenance = items.find(i => i.status === 'maintenance')?.quantity || 0;
-      const replacement = items.find(i => i.status === 'low')?.quantity || 0;
-      const total = items.reduce((sum, i) => sum + i.quantity, 0);
-
-      setMaintenanceCount(maintenance.toString());
-      setReplacementCount(replacement.toString());
-      setQuantity(total.toString());
+    if (items && items[0]) {
+      setMaintenanceCount(items[0].maintenance_count?.toString() || "0");
+      setReplacementCount(items[0].replacement_count?.toString() || "0");
+      setQuantity(items[0].quantity?.toString() || "0");
     }
   };
 

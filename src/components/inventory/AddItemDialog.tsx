@@ -85,7 +85,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
       });
 
       const { data, error } = await supabase
-        .from('current_status')
+        .from('currentitem')
         .insert({
           name: name.trim(),
           quantity: totalQuantity,
@@ -109,7 +109,6 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
         description: "Item added successfully",
       });
       
-      // Ensure we trigger the refresh of the table
       await onItemAdded();
       setIsOpen(false);
       resetForm();
