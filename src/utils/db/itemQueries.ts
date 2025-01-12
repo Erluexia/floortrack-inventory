@@ -9,10 +9,12 @@ export interface ItemStatusCounts {
 }
 
 export const fetchItemStatus = async (roomNumber: string) => {
+  console.log("Fetching items for room:", roomNumber);
   const { data, error } = await supabase
     .from("currentitem")
     .select("*")
-    .eq("room_number", roomNumber);
+    .eq("room_number", roomNumber)
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.error("Error fetching items:", error);
@@ -28,6 +30,7 @@ export const fetchItemStatus = async (roomNumber: string) => {
 };
 
 export const fetchPreviousStatus = async (roomNumber: string) => {
+  console.log("Fetching previous status for room:", roomNumber);
   const { data, error } = await supabase
     .from("itemhistory")
     .select(`
@@ -56,6 +59,7 @@ export const fetchPreviousStatus = async (roomNumber: string) => {
 };
 
 export const subscribeToItemChanges = (roomNumber: string, onUpdate: () => void) => {
+  console.log("Setting up realtime subscription for room:", roomNumber);
   return supabase
     .channel('items-channel')
     .on(
@@ -66,8 +70,8 @@ export const subscribeToItemChanges = (roomNumber: string, onUpdate: () => void)
         table: 'currentitem',
         filter: `room_number=eq.${roomNumber}`,
       },
-      () => {
-        console.log('Items changed, refreshing data');
+      (payload) => {
+        console.log('Items changed:', payload);
         onUpdate();
       }
     )

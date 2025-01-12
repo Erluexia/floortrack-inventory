@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { ItemFormFields } from "./ItemFormFields";
-import { supabase } from "@/integrations/supabase/client";
+import { addItem } from "@/utils/db/itemOperations";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 interface AddItemDialogProps {
@@ -75,57 +75,19 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
     setIsSubmitting(true);
 
     try {
-      // Check if item already exists in the room
-      const { data: existingItems } = await supabase
-        .from('currentitem')
-        .select('*')
-        .eq('name', name.trim())
-        .eq('room_number', roomNumber);
+      const success = await addItem(
+        name.trim(),
+        totalQuantity,
+        maintenanceQuantity,
+        replacementQuantity,
+        roomNumber
+      );
 
-      if (existingItems && existingItems.length > 0) {
-        toast({
-          title: "Error",
-          description: "An item with this name already exists in this room",
-          variant: "destructive",
-        });
-        return;
+      if (success) {
+        onItemAdded();
+        setIsOpen(false);
+        resetForm();
       }
-
-      const { data, error } = await supabase
-        .from('currentitem')
-        .insert({
-          name: name.trim(),
-          quantity: totalQuantity,
-          maintenance_count: maintenanceQuantity,
-          replacement_count: replacementQuantity,
-          room_number: roomNumber,
-          status: maintenanceQuantity > 0 ? 'maintenance' : replacementQuantity > 0 ? 'low' : 'good'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error inserting item:', error);
-        throw error;
-      }
-
-      console.log('Successfully inserted item:', data);
-      
-      toast({
-        title: "Success",
-        description: "Item added successfully",
-      });
-      
-      onItemAdded();
-      setIsOpen(false);
-      resetForm();
-    } catch (error) {
-      console.error("Error adding item:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add item",
-        variant: "destructive",
-      });
     } finally {
       setIsSubmitting(false);
     }

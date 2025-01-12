@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Edit2 } from "lucide-react";
 import { ItemFormFields } from "./ItemFormFields";
-import { updateItem } from "@/utils/itemOperations";
+import { updateItem } from "@/utils/db/itemOperations";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback";
 
 interface EditItemDialogProps {
@@ -21,6 +20,8 @@ interface EditItemDialogProps {
     name: string;
     quantity: number;
     status: "good" | "maintenance" | "low";
+    maintenance_count: number;
+    replacement_count: number;
   };
   roomNumber: string;
   onItemUpdated: () => void;
@@ -31,23 +32,9 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState(item.name);
   const [quantity, setQuantity] = useState(item.quantity.toString());
-  const [maintenanceCount, setMaintenanceCount] = useState("0");
-  const [replacementCount, setReplacementCount] = useState("0");
+  const [maintenanceCount, setMaintenanceCount] = useState(item.maintenance_count.toString());
+  const [replacementCount, setReplacementCount] = useState(item.replacement_count.toString());
   const { toast } = useToast();
-
-  const initializeStatusCounts = async () => {
-    const { data: items } = await supabase
-      .from("currentitem")
-      .select("*")
-      .eq("name", item.name)
-      .eq("room_number", roomNumber);
-
-    if (items && items[0]) {
-      setMaintenanceCount(items[0].maintenance_count?.toString() || "0");
-      setReplacementCount(items[0].replacement_count?.toString() || "0");
-      setQuantity(items[0].quantity?.toString() || "0");
-    }
-  };
 
   const handleSubmit = useDebouncedCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,36 +56,25 @@ export const EditItemDialog = ({ item, roomNumber, onItemUpdated }: EditItemDial
         return;
       }
 
-      const itemWithRoom = {
+      const success = await updateItem({
         ...item,
-        room_number: roomNumber,
+        quantity: totalQuantity,
         maintenance_count: maintenanceQuantity,
         replacement_count: replacementQuantity,
-        quantity: totalQuantity
-      };
-
-      const success = await updateItem(itemWithRoom);
+        room_number: roomNumber
+      });
 
       if (success) {
-        toast({
-          title: "Success",
-          description: "Item updated successfully",
-        });
         onItemUpdated();
         setOpen(false);
       }
     } finally {
       setIsSubmitting(false);
     }
-  }, 1000);
+  }, 500);
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      setOpen(newOpen);
-      if (newOpen) {
-        initializeStatusCounts();
-      }
-    }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" disabled={isSubmitting}>
           <Edit2 className="h-4 w-4" />
