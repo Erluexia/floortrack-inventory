@@ -75,14 +75,21 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
     setIsSubmitting(true);
 
     try {
-      console.log('Attempting to insert item:', {
-        name: name.trim(),
-        quantity: totalQuantity,
-        maintenance_count: maintenanceQuantity,
-        replacement_count: replacementQuantity,
-        room_number: roomNumber,
-        status: maintenanceQuantity > 0 ? 'maintenance' : replacementQuantity > 0 ? 'low' : 'good'
-      });
+      // Check if item already exists in the room
+      const { data: existingItems } = await supabase
+        .from('currentitem')
+        .select('*')
+        .eq('name', name.trim())
+        .eq('room_number', roomNumber);
+
+      if (existingItems && existingItems.length > 0) {
+        toast({
+          title: "Error",
+          description: "An item with this name already exists in this room",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { data, error } = await supabase
         .from('currentitem')
@@ -94,7 +101,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
           room_number: roomNumber,
           status: maintenanceQuantity > 0 ? 'maintenance' : replacementQuantity > 0 ? 'low' : 'good'
         })
-        .select('*')
+        .select()
         .single();
 
       if (error) {
@@ -109,7 +116,7 @@ export const AddItemDialog = ({ roomNumber, onItemAdded }: AddItemDialogProps) =
         description: "Item added successfully",
       });
       
-      await onItemAdded();
+      onItemAdded();
       setIsOpen(false);
       resetForm();
     } catch (error) {
