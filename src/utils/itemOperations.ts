@@ -32,8 +32,8 @@ export const fetchItems = async (roomNumber: string) => {
     if (!acc[item.name]) {
       acc[item.name] = {
         ...item,
-        maintenanceCount: item.maintenance_count || 0,
-        replacementCount: item.replacement_count || 0,
+        maintenance_count: item.maintenance_count || 0,
+        replacement_count: item.replacement_count || 0,
       };
     }
     return acc;
