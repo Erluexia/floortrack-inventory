@@ -85,7 +85,9 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
     try {
       console.log("Starting signup process for:", email.trim());
       
-      const redirectTo = `${window.location.origin}/login`;
+      // Get the current origin for redirect URL
+      const origin = window.location.origin;
+      const redirectTo = `${origin}/login`;
       console.log("Redirect URL set to:", redirectTo);
       
       const { data, error } = await supabase.auth.signUp({
