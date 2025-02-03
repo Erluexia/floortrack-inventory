@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,36 +45,38 @@ const App = () => {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/"
-              element={session ? <Index /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/room/:id"
-              element={session ? <Room /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/login"
-              element={!session ? <Login /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/signup"
-              element={!session ? <Signup /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/profile"
-              element={session ? <Profile /> : <Navigate to="/login" />}
-            />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route
+                path="/"
+                element={session ? <Index /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/room/:id"
+                element={session ? <Room /> : <Navigate to="/login" />}
+              />
+              <Route
+                path="/login"
+                element={!session ? <Login /> : <Navigate to="/" />}
+              />
+              <Route
+                path="/signup"
+                element={!session ? <Signup /> : <Navigate to="/" />}
+              />
+              <Route
+                path="/profile"
+                element={session ? <Profile /> : <Navigate to="/login" />}
+              />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 };
 
