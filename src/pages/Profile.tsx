@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut } from "lucide-react";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -18,8 +19,22 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    checkUser();
     getProfile();
   }, []);
+
+  async function checkUser() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/login");
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+      navigate("/login");
+    }
+  }
 
   async function getProfile() {
     try {
@@ -44,8 +59,33 @@ const Profile = () => {
       }
     } catch (error) {
       console.error("Error loading user data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load profile data",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleSignOut() {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "You have been signed out successfully",
+      });
+      navigate("/login");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
     }
   }
 
@@ -127,7 +167,17 @@ const Profile = () => {
         <Header />
         <main className="flex-1 overflow-y-auto p-4">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-8">Profile Settings</h1>
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-2xl font-bold">Profile Settings</h1>
+              <Button 
+                variant="destructive" 
+                onClick={handleSignOut}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
             
             <div className="space-y-6 bg-white p-6 rounded-lg shadow">
               <div className="flex items-center space-x-4">
