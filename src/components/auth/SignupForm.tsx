@@ -1,9 +1,16 @@
 import { useState } from "react";
-import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SignupFormProps {
   onSuccess: () => void;
@@ -15,6 +22,7 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [username, setUsername] = useState("");
+  const [role, setRole] = useState<string>("faculty");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,7 +62,6 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
     try {
       console.log("Starting signup process for:", email.trim());
       
-      // Get the current URL for redirection
       const redirectTo = `${window.location.origin}/login`;
       console.log("Redirect URL set to:", redirectTo);
       
@@ -64,6 +71,7 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
         options: {
           data: {
             username: username.trim(),
+            role: role, // Add the selected role to user metadata
           },
           emailRedirectTo: redirectTo,
         },
@@ -147,6 +155,27 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
           className="pl-10"
           disabled={loading}
         />
+      </div>
+
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Shield className="h-5 w-5 text-gray-400" />
+        </div>
+        <Select
+          value={role}
+          onValueChange={setRole}
+          disabled={loading}
+        >
+          <SelectTrigger className="pl-10">
+            <SelectValue placeholder="Select your role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="faculty">Faculty</SelectItem>
+            <SelectItem value="it_office">IT Office</SelectItem>
+            <SelectItem value="property_custodian">Property Custodian</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="relative">

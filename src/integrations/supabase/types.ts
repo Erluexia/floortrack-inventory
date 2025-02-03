@@ -137,18 +137,21 @@ export type Database = {
         Row: {
           avatar_url: string | null
           id: string
+          role: Database["public"]["Enums"]["app_role"] | null
           updated_at: string | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
           id: string
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
           id?: string
+          role?: Database["public"]["Enums"]["app_role"] | null
           updated_at?: string | null
           username?: string | null
         }
@@ -175,6 +178,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "faculty" | "it_office" | "property_custodian"
       item_status: "good" | "maintenance" | "low"
     }
     CompositeTypes: {
