@@ -39,6 +39,15 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
       return;
     }
 
+    if (username.trim().length < 3) {
+      toast({
+        title: "Error",
+        description: "Username must be at least 3 characters long",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -71,7 +80,7 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
         options: {
           data: {
             username: username.trim(),
-            role: role, // Add the selected role to user metadata
+            role: role,
           },
           emailRedirectTo: redirectTo,
         },

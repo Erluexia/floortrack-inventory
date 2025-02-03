@@ -176,6 +176,30 @@ export type Database = {
           replacement_count: number
         }[]
       }
+      get_user_activity: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: {
+          action_type: string
+          details: string
+          item_name: string
+          room_number: string
+          created_at: string
+        }[]
+      }
+      get_user_role: {
+        Args: {
+          user_id: string
+        }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_permission: {
+        Args: {
+          required_role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "faculty" | "it_office" | "property_custodian"
