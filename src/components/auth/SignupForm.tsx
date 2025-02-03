@@ -27,6 +27,11 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /@mcpi\.edu\.ph$/;
+    return emailRegex.test(email.trim());
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -34,6 +39,15 @@ export const SignupForm = ({ onSuccess }: SignupFormProps) => {
       toast({
         title: "Error",
         description: "All fields are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      toast({
+        title: "Error",
+        description: "Please use your MCPI email address (@mcpi.edu.ph)",
         variant: "destructive",
       });
       return;
